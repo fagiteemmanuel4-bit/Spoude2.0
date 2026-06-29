@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          tokens: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          tokens?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          tokens?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      attempts: {
+        Row: {
+          answers: Json
+          completed_at: string
+          duration_seconds: number
+          id: string
+          score: number
+          set_id: string
+          total: number
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string
+          duration_seconds?: number
+          id?: string
+          score?: number
+          set_id: string
+          total?: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string
+          duration_seconds?: number
+          id?: string
+          score?: number
+          set_id?: string
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attempts_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "study_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           created_at: string
@@ -65,6 +130,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          plan: string
           updated_at: string
         }
         Insert: {
@@ -72,6 +138,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          plan?: string
           updated_at?: string
         }
         Update: {
@@ -79,9 +146,63 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          plan?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      study_sets: {
+        Row: {
+          ai_generated: boolean
+          created_at: string
+          description: string | null
+          id: string
+          kind: Database["public"]["Enums"]["set_kind"]
+          questions: Json
+          source_material_id: string | null
+          subject: string | null
+          time_limit_minutes: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_generated?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["set_kind"]
+          questions?: Json
+          source_material_id?: string | null
+          subject?: string | null
+          time_limit_minutes?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_generated?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["set_kind"]
+          questions?: Json
+          source_material_id?: string | null
+          subject?: string | null
+          time_limit_minutes?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_sets_source_material_id_fkey"
+            columns: ["source_material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -92,6 +213,7 @@ export type Database = {
     }
     Enums: {
       material_type: "notes" | "homework" | "exam"
+      set_kind: "study" | "test" | "exam"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -220,6 +342,7 @@ export const Constants = {
   public: {
     Enums: {
       material_type: ["notes", "homework", "exam"],
+      set_kind: ["study", "test", "exam"],
     },
   },
 } as const
