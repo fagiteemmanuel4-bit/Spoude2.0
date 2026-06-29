@@ -1,0 +1,351 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronLeft,
+  Loader2,
+  RotateCcw,
+  Sparkles,
+  Timer,
+  Trophy,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/sets/$id")({
+  head: () => ({ meta: [{ title: "Lumio" }] }),
+  component: SetPlayPage,
+});
+
+type Question = { prompt: string; choices?: string[]; answer: string; explanation?: string };
+type SetRow = {
+  id: string;
+  kind: "study" | "test" | "exam";
+  title: string;
+  subject: string | null;
+  questions: Question[];
+  time_limit_minutes: number | null;
+  ai_generated: boolean;
+};
+
+function SetPlayPage() {
+  const { id } = Route.useParams();
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["set", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("study_sets")
+        .select("id,kind,title,subject,questions,time_limit_minutes,ai_generated")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data as unknown as SetRow;
+    },
+  });
+
+  if (isLoading)
+    return (
+      <div className="surface p-12 flex items-center justify-center text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  if (error || !data)
+    return (
+      <div className="surface p-10 text-center text-sm text-muted-foreground">
+        Couldn't load this set.{" "}
+        <Link to="/dashboard" className="text-primary hover:underline">
+          Go back
+        </Link>
+      </div>
+    );
+
+  return data.kind === "study" ? <FlashcardPlayer set={data} /> : <QuizPlayer set={data} />;
+}
+
+function BackTo({ kind }: { kind: SetRow["kind"] }) {
+  const to = kind === "study" ? "/study" : kind === "test" ? "/tests" : "/exams";
+  return (
+    <Link
+      to={to}
+      className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+    >
+      <ChevronLeft className="h-4 w-4" /> Back
+    </Link>
+  );
+}
+
+function FlashcardPlayer({ set }: { set: SetRow }) {
+  const [i, setI] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const q = set.questions[i];
+  const total = set.questions.length;
+
+  const next = () => {
+    setFlipped(false);
+    setI((x) => Math.min(total - 1, x + 1));
+  };
+  const prev = () => {
+    setFlipped(false);
+    setI((x) => Math.max(0, x - 1));
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-up max-w-2xl mx-auto">
+      <div className="flex items-center justify-between">
+        <BackTo kind={set.kind} />
+        <span className="text-xs text-muted-foreground">
+          {i + 1} / {total}
+        </span>
+      </div>
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight">{set.title}</h1>
+        {set.subject && <p className="text-sm text-muted-foreground mt-0.5">{set.subject}</p>}
+      </header>
+      <button
+        onClick={() => setFlipped((f) => !f)}
+        className="surface-interactive w-full min-h-[260px] p-8 flex items-center justify-center text-center text-lg leading-relaxed font-medium"
+      >
+        <div>
+          <div className="text-[10px] uppercase tracking-widest text-primary font-semibold mb-3">
+            {flipped ? "Answer" : "Prompt"}
+          </div>
+          <div>{flipped ? q.answer : q.prompt}</div>
+          {!flipped && <div className="mt-4 text-xs text-muted-foreground">Tap to flip</div>}
+        </div>
+      </button>
+      <div className="flex items-center justify-between">
+        <button
+          onClick={prev}
+          disabled={i === 0}
+          className="ripple inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium disabled:opacity-40 hover:border-primary/40 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Prev
+        </button>
+        {i === total - 1 ? (
+          <button
+            onClick={() => {
+              setI(0);
+              setFlipped(false);
+            }}
+            className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:shadow-glow transition-all"
+          >
+            <RotateCcw className="h-4 w-4" /> Start over
+          </button>
+        ) : (
+          <button
+            onClick={next}
+            className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:shadow-glow transition-all"
+          >
+            Next <ArrowRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuizPlayer({ set }: { set: SetRow }) {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [answers, setAnswers] = useState<(string | null)[]>(() => set.questions.map(() => null));
+  const [i, setI] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
+  const [startedAt] = useState(() => Date.now());
+  const total = set.questions.length;
+  const timed = set.kind === "exam" && set.time_limit_minutes;
+  const [secondsLeft, setSecondsLeft] = useState(() =>
+    timed ? (set.time_limit_minutes as number) * 60 : 0,
+  );
+
+  useEffect(() => {
+    if (!timed || submitted) return;
+    const t = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(t);
+          finalize();
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timed, submitted]);
+
+  const score = useMemo(
+    () => answers.reduce((acc, a, idx) => acc + (a !== null && a === set.questions[idx].answer ? 1 : 0), 0),
+    [answers, set.questions],
+  );
+
+  async function finalize() {
+    if (submitted) return;
+    setSubmitted(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (u.user) {
+      await supabase.from("attempts").insert({
+        user_id: u.user.id,
+        set_id: set.id,
+        score,
+        total,
+        duration_seconds: Math.round((Date.now() - startedAt) / 1000),
+        answers,
+      });
+      qc.invalidateQueries({ queryKey: ["attempts"] });
+    }
+  }
+
+  if (submitted) {
+    const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+    return (
+      <div className="space-y-6 animate-fade-up max-w-2xl mx-auto">
+        <BackTo kind={set.kind} />
+        <div className="surface p-8 text-center">
+          <div className="h-14 w-14 mx-auto rounded-full bg-primary-soft flex items-center justify-center">
+            <Trophy className="h-7 w-7 text-primary" />
+          </div>
+          <h2 className="mt-4 text-2xl font-bold">You scored {pct}%</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {score} correct out of {total}
+          </p>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button
+              onClick={() => {
+                setAnswers(set.questions.map(() => null));
+                setI(0);
+                setSubmitted(false);
+              }}
+              className="ripple inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:border-primary/40 transition-colors"
+            >
+              <RotateCcw className="h-4 w-4" /> Try again
+            </button>
+            <button
+              onClick={() => navigate({ to: set.kind === "test" ? "/tests" : "/exams" })}
+              className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:shadow-glow transition-all"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {set.questions.map((q, idx) => {
+            const correct = answers[idx] === q.answer;
+            return (
+              <div key={idx} className="surface p-5">
+                <div className="flex items-start gap-2">
+                  {correct ? (
+                    <Check className="h-4 w-4 text-primary mt-1 shrink-0" />
+                  ) : (
+                    <X className="h-4 w-4 text-destructive mt-1 shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{q.prompt}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Your answer: <span className="text-foreground">{answers[idx] ?? "—"}</span>
+                    </div>
+                    {!correct && (
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        Correct: <span className="text-foreground">{q.answer}</span>
+                      </div>
+                    )}
+                    {q.explanation && (
+                      <div className="mt-2 text-xs text-muted-foreground italic">{q.explanation}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  const q = set.questions[i];
+  const selected = answers[i];
+
+  return (
+    <div className="space-y-6 animate-fade-up max-w-2xl mx-auto">
+      <div className="flex items-center justify-between">
+        <BackTo kind={set.kind} />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {timed && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-soft text-foreground font-mono">
+              <Timer className="h-3.5 w-3.5" />
+              {Math.floor(secondsLeft / 60)
+                .toString()
+                .padStart(2, "0")}
+              :{(secondsLeft % 60).toString().padStart(2, "0")}
+            </span>
+          )}
+          <span>
+            {i + 1} / {total}
+          </span>
+        </div>
+      </div>
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight">{set.title}</h1>
+        {set.subject && <p className="text-sm text-muted-foreground mt-0.5">{set.subject}</p>}
+      </header>
+
+      <div className="surface p-6 space-y-4">
+        <div className="text-[10px] uppercase tracking-widest text-primary font-semibold inline-flex items-center gap-1">
+          {set.ai_generated && <Sparkles className="h-3 w-3" />} Question {i + 1}
+        </div>
+        <p className="text-lg font-medium leading-snug">{q.prompt}</p>
+        <div className="grid gap-2">
+          {(q.choices ?? []).map((c) => {
+            const active = selected === c;
+            return (
+              <button
+                key={c}
+                onClick={() =>
+                  setAnswers((xs) => xs.map((v, idx) => (idx === i ? c : v)))
+                }
+                className={`text-left rounded-lg border px-4 py-3 text-sm transition-all ${
+                  active
+                    ? "border-primary bg-primary-soft shadow-elev-1"
+                    : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setI((x) => Math.max(0, x - 1))}
+          disabled={i === 0}
+          className="ripple inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium disabled:opacity-40 hover:border-primary/40 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Prev
+        </button>
+        {i === total - 1 ? (
+          <button
+            onClick={() => {
+              if (answers.some((a) => a === null) && !confirm("Submit with unanswered questions?")) return;
+              finalize().catch((e) => toast.error(e instanceof Error ? e.message : "Failed"));
+            }}
+            className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:shadow-glow transition-all"
+          >
+            Submit
+          </button>
+        ) : (
+          <button
+            onClick={() => setI((x) => Math.min(total - 1, x + 1))}
+            className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:shadow-glow transition-all"
+          >
+            Next <ArrowRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
