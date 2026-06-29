@@ -12,6 +12,47 @@ export const Route = createFileRoute("/_authenticated/settings")({
   component: Settings,
 });
 
+function AiUsageCard() {
+  const { data: usage, isLoading } = useQuery({
+    queryKey: ["ai-usage"],
+    queryFn: () => getAiUsage(),
+  });
+  const plan = planFor(usage?.plan);
+  const pct =
+    usage && usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
+  return (
+    <section className="surface p-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Zap className="h-4 w-4 text-primary" /> AI usage & plan
+        </h2>
+        <Link
+          to="/billing"
+          className="ripple inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 transition-colors"
+        >
+          <CreditCard className="h-3.5 w-3.5" /> Manage billing <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">
+        You're on the <span className="text-foreground font-medium">{plan.name}</span> plan
+        {" "}({plan.price} {plan.priceNote}).
+      </p>
+      <div className="mt-4 flex items-baseline gap-2">
+        <span className="text-2xl font-bold tracking-tight">
+          {isLoading ? "…" : usage?.used ?? 0}
+        </span>
+        <span className="text-sm text-muted-foreground">
+          / {usage?.limit ?? "—"} AI generations this month
+        </span>
+      </div>
+      <div className="mt-3 h-2 w-full rounded-full bg-secondary overflow-hidden">
+        <div className="h-full bg-primary transition-all duration-700" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">Resets on the 1st of each month.</p>
+    </section>
+  );
+}
+
 function Settings() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
