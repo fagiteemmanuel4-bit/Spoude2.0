@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ShieldCheck, ShieldOff, Loader2, Mail, User as UserIcon, Sparkles, Zap, CreditCard, ArrowRight } from "lucide-react";
+import { ShieldCheck, ShieldOff, Loader2, Mail, User as UserIcon, Sparkles, Zap, CreditCard, ArrowRight, Volume2 } from "lucide-react";
 import { getUsage } from "@/lib/exam.functions";
 import { planFor } from "@/lib/plans";
+import { loadVoicePrefs, saveVoicePrefs, getVoices, type VoicePrefs, speakableText } from "@/lib/voice";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — Lumio" }] }),
@@ -79,6 +80,7 @@ function Settings() {
     });
     refreshFactors();
   }, []);
+
 
   const saveName = async (e: React.FormEvent) => {
     e.preventDefault();
