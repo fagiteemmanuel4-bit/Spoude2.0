@@ -3,8 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, FileText, GraduationCap, Download, Trash2, Loader2, Search } from "lucide-react";
+import { BookOpen, FileText, GraduationCap, Download, Trash2, Loader2, Search, Upload as UploadIcon } from "lucide-react";
 import { toast } from "sonner";
+import { UploadDialog } from "@/components/UploadDialog";
 
 const searchSchema = z.object({ type: z.enum(["notes", "homework", "exam"]).optional() });
 
@@ -39,6 +40,7 @@ function Library() {
   const qc = useQueryClient();
   const activeType = search.type ?? "notes";
   const [query, setQuery] = useState("");
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["materials", activeType],
@@ -92,16 +94,28 @@ function Library() {
           <h1 className="text-3xl font-bold tracking-tight">Library</h1>
           <p className="mt-1 text-muted-foreground">All your uploaded study materials in one place.</p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-input bg-card px-3 py-2 w-full sm:w-72 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40 transition-all">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search title, subject…"
-            className="w-full bg-transparent outline-none text-sm"
-          />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 rounded-lg border border-input bg-card px-3 py-2 flex-1 sm:w-72 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40 transition-all">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search title, subject…"
+              className="w-full bg-transparent outline-none text-sm"
+            />
+          </div>
+          <button
+            onClick={() => setUploadOpen(true)}
+            className="ripple inline-flex items-center gap-1.5 bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm font-semibold shadow-elev-1 hover:shadow-glow transition-all"
+          >
+            <UploadIcon className="h-4 w-4" /> Upload
+          </button>
         </div>
       </header>
+
+      {uploadOpen && (
+        <UploadDialog defaultType={activeType} onClose={() => setUploadOpen(false)} />
+      )}
 
       <div className="flex gap-2 border-b border-border">
         {TABS.map(({ id, label, icon: Icon }) => {

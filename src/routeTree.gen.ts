@@ -16,8 +16,7 @@ import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedUploadRouteImport } from './routes/_authenticated/upload'
-import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/tests'
+import { Route as ApiTeachRouteImport } from './routes/api/teach'
 import { Route as AuthenticatedStudyRouteImport } from './routes/_authenticated/study'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
@@ -60,15 +59,10 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedUploadRoute = AuthenticatedUploadRouteImport.update({
-  id: '/upload',
-  path: '/upload',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTestsRoute = AuthenticatedTestsRouteImport.update({
-  id: '/tests',
-  path: '/tests',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const ApiTeachRoute = ApiTeachRouteImport.update({
+  id: '/api/teach',
+  path: '/api/teach',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedStudyRoute = AuthenticatedStudyRouteImport.update({
   id: '/study',
@@ -119,8 +113,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/study': typeof AuthenticatedStudyRoute
-  '/tests': typeof AuthenticatedTestsRoute
-  '/upload': typeof AuthenticatedUploadRoute
+  '/api/teach': typeof ApiTeachRoute
   '/sets/$id': typeof AuthenticatedSetsIdRoute
 }
 export interface FileRoutesByTo {
@@ -136,8 +129,7 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/study': typeof AuthenticatedStudyRoute
-  '/tests': typeof AuthenticatedTestsRoute
-  '/upload': typeof AuthenticatedUploadRoute
+  '/api/teach': typeof ApiTeachRoute
   '/sets/$id': typeof AuthenticatedSetsIdRoute
 }
 export interface FileRoutesById {
@@ -155,8 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/study': typeof AuthenticatedStudyRoute
-  '/_authenticated/tests': typeof AuthenticatedTestsRoute
-  '/_authenticated/upload': typeof AuthenticatedUploadRoute
+  '/api/teach': typeof ApiTeachRoute
   '/_authenticated/sets/$id': typeof AuthenticatedSetsIdRoute
 }
 export interface FileRouteTypes {
@@ -174,8 +165,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/settings'
     | '/study'
-    | '/tests'
-    | '/upload'
+    | '/api/teach'
     | '/sets/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -191,8 +181,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/settings'
     | '/study'
-    | '/tests'
-    | '/upload'
+    | '/api/teach'
     | '/sets/$id'
   id:
     | '__root__'
@@ -209,8 +198,7 @@ export interface FileRouteTypes {
     | '/_authenticated/library'
     | '/_authenticated/settings'
     | '/_authenticated/study'
-    | '/_authenticated/tests'
-    | '/_authenticated/upload'
+    | '/api/teach'
     | '/_authenticated/sets/$id'
   fileRoutesById: FileRoutesById
 }
@@ -222,6 +210,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  ApiTeachRoute: typeof ApiTeachRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -275,19 +264,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/upload': {
-      id: '/_authenticated/upload'
-      path: '/upload'
-      fullPath: '/upload'
-      preLoaderRoute: typeof AuthenticatedUploadRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tests': {
-      id: '/_authenticated/tests'
-      path: '/tests'
-      fullPath: '/tests'
-      preLoaderRoute: typeof AuthenticatedTestsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/api/teach': {
+      id: '/api/teach'
+      path: '/api/teach'
+      fullPath: '/api/teach'
+      preLoaderRoute: typeof ApiTeachRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/study': {
       id: '/_authenticated/study'
@@ -348,8 +330,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudyRoute: typeof AuthenticatedStudyRoute
-  AuthenticatedTestsRoute: typeof AuthenticatedTestsRoute
-  AuthenticatedUploadRoute: typeof AuthenticatedUploadRoute
   AuthenticatedSetsIdRoute: typeof AuthenticatedSetsIdRoute
 }
 
@@ -360,8 +340,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudyRoute: AuthenticatedStudyRoute,
-  AuthenticatedTestsRoute: AuthenticatedTestsRoute,
-  AuthenticatedUploadRoute: AuthenticatedUploadRoute,
   AuthenticatedSetsIdRoute: AuthenticatedSetsIdRoute,
 }
 
@@ -376,17 +354,8 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  ApiTeachRoute: ApiTeachRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

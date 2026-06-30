@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ShieldCheck, ShieldOff, Loader2, Mail, User as UserIcon, Sparkles, Zap, CreditCard, ArrowRight } from "lucide-react";
-import { getAiUsage } from "@/lib/sets.functions";
+import { ShieldCheck, ShieldOff, Loader2, Mail, User as UserIcon, Sparkles, Zap, CreditCard, ArrowRight, Volume2 } from "lucide-react";
+import { getUsage } from "@/lib/exam.functions";
 import { planFor } from "@/lib/plans";
+import { loadVoicePrefs, saveVoicePrefs, getVoices, type VoicePrefs, speakableText } from "@/lib/voice";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — Lumio" }] }),
@@ -13,9 +14,85 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function AiUsageCard() {
+  return InnerAiUsageCard();
+}
+
+function VoiceCard() {
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [prefs, setPrefs] = useState<VoicePrefs>(() => loadVoicePrefs());
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const load = () => setVoices(getVoices());
+    load();
+    window.speechSynthesis.onvoiceschanged = load;
+    return () => { window.speechSynthesis.onvoiceschanged = null; };
+  }, []);
+
+  const update = (patch: Partial<VoicePrefs>) => {
+    const next = { ...prefs, ...patch };
+    setPrefs(next);
+    saveVoicePrefs(next);
+  };
+
+  const preview = () => {
+    if (typeof window === "undefined") return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(speakableText("Hello! I'll be your tutor on Lumio. Let's learn something together."));
+    const v = voices.find((x) => x.voiceURI === prefs.voiceURI);
+    if (v) u.voice = v;
+    u.rate = prefs.rate;
+    u.pitch = prefs.pitch;
+    window.speechSynthesis.speak(u);
+  };
+
+  return (
+    <section className="surface p-6">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        <Volume2 className="h-4 w-4 text-primary" /> Voice & accent
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">Pick the voice the Play button uses. Options come from your device — accents vary by OS.</p>
+      <div className="mt-4 grid sm:grid-cols-2 gap-4">
+        <label className="block">
+          <span className="block text-xs font-medium text-muted-foreground mb-1.5">Voice</span>
+          <select
+            value={prefs.voiceURI ?? ""}
+            onChange={(e) => update({ voiceURI: e.target.value || null })}
+            className="w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/40 transition-all"
+          >
+            <option value="">System default</option>
+            {voices.map((v) => (
+              <option key={v.voiceURI} value={v.voiceURI}>
+                {v.name} — {v.lang}{v.default ? " (default)" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="block text-xs font-medium text-muted-foreground mb-1.5">Speed ({prefs.rate.toFixed(1)}x)</span>
+            <input type="range" min={0.5} max={2} step={0.1} value={prefs.rate} onChange={(e) => update({ rate: Number(e.target.value) })} className="w-full accent-[var(--color-primary)]" />
+          </label>
+          <label className="block">
+            <span className="block text-xs font-medium text-muted-foreground mb-1.5">Pitch ({prefs.pitch.toFixed(1)})</span>
+            <input type="range" min={0.5} max={2} step={0.1} value={prefs.pitch} onChange={(e) => update({ pitch: Number(e.target.value) })} className="w-full accent-[var(--color-primary)]" />
+          </label>
+        </div>
+      </div>
+      <button onClick={preview} className="ripple mt-4 inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:border-primary/40 transition-colors">
+        <Volume2 className="h-3.5 w-3.5" /> Preview
+      </button>
+      {voices.length === 0 && (
+        <p className="mt-3 text-xs text-muted-foreground">No voices detected yet — they load shortly after the page opens.</p>
+      )}
+    </section>
+  );
+}
+
+function InnerAiUsageCard() {
   const { data: usage, isLoading } = useQuery({
     queryKey: ["ai-usage"],
-    queryFn: () => getAiUsage(),
+    queryFn: () => getUsage(),
   });
   const plan = planFor(usage?.plan);
   const pct =
@@ -79,6 +156,7 @@ function Settings() {
     });
     refreshFactors();
   }, []);
+
 
   const saveName = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +226,7 @@ function Settings() {
       </header>
 
       <AiUsageCard />
+      <VoiceCard />
 
       {/* Profile */}
       <section className="surface p-6">

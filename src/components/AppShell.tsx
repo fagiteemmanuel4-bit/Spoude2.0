@@ -3,13 +3,11 @@ import { type ReactNode, useEffect, useState } from "react";
 import {
   LayoutDashboard,
   FolderOpen,
-  Upload,
   Settings,
   LogOut,
   Menu,
   X,
   BookOpenCheck,
-  ListChecks,
   GraduationCap,
   CreditCard,
 } from "lucide-react";
@@ -21,9 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, group: "main" },
   { to: "/library", label: "Library", icon: FolderOpen, group: "main" },
-  { to: "/upload", label: "Upload", icon: Upload, group: "main" },
   { to: "/study", label: "Study", icon: BookOpenCheck, group: "learn" },
-  { to: "/tests", label: "Take a test", icon: ListChecks, group: "learn" },
   { to: "/exams", label: "Take an exam", icon: GraduationCap, group: "learn" },
   { to: "/billing", label: "Billing", icon: CreditCard, group: "account" },
   { to: "/settings", label: "Settings", icon: Settings, group: "account" },

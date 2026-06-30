@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PLANS, planFor, type PlanId } from "@/lib/plans";
-import { getAiUsage } from "@/lib/sets.functions";
+import { getUsage } from "@/lib/exam.functions";
 import { Check, Loader2, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,7 +16,7 @@ function Billing() {
   const qc = useQueryClient();
   const { data: usage, isLoading } = useQuery({
     queryKey: ["ai-usage"],
-    queryFn: () => getAiUsage(),
+    queryFn: () => getUsage(),
   });
   const [switching, setSwitching] = useState<PlanId | null>(null);
 

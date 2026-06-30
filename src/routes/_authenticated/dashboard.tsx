@@ -14,7 +14,7 @@ import {
   TrendingUp,
   CreditCard,
 } from "lucide-react";
-import { getAiUsage } from "@/lib/sets.functions";
+import { getUsage } from "@/lib/exam.functions";
 import { planFor } from "@/lib/plans";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -72,7 +72,7 @@ function Dashboard() {
     },
   });
 
-  const { data: usage } = useQuery({ queryKey: ["ai-usage"], queryFn: () => getAiUsage() });
+  const { data: usage } = useQuery({ queryKey: ["ai-usage"], queryFn: () => getUsage() });
   const plan = planFor(usage?.plan);
 
   const avgScore =
@@ -95,7 +95,7 @@ function Dashboard() {
           </h1>
         </div>
         <Link
-          to="/upload"
+          to="/library"
           className="ripple inline-flex items-center gap-2 self-start bg-primary text-primary-foreground rounded-lg px-4 py-2.5 text-sm font-semibold shadow-elev-1 hover:shadow-glow transition-all"
         >
           <UploadIcon className="h-4 w-4" /> Upload file
@@ -126,7 +126,7 @@ function Dashboard() {
           label="Avg. score"
           value={avgScore !== null ? `${avgScore}%` : "—"}
           hint={`${attempts?.length ?? 0} recent attempts`}
-          to="/tests"
+          to="/exams"
           icon={TrendingUp}
         />
         <MetricCard
@@ -147,7 +147,7 @@ function Dashboard() {
           desc="Memorize key concepts fast — AI-generated or your own."
         />
         <ActionCard
-          to="/tests"
+          to="/exams"
           icon={ListChecks}
           title="Take a quick test"
           desc="Multiple-choice quizzes from any topic in seconds."
@@ -198,7 +198,7 @@ function Dashboard() {
             {((stats?.recent ?? []).length + (setsStats?.recent ?? []).length) === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 Nothing yet —{" "}
-                <Link to="/upload" className="text-primary font-medium hover:underline">upload a file</Link>{" "}
+                <Link to="/library" className="text-primary font-medium hover:underline">upload a file</Link>{" "}
                 or{" "}
                 <Link to="/study" className="text-primary font-medium hover:underline">create a study set</Link>.
               </div>
@@ -255,7 +255,7 @@ function MetricCard({
   label: string;
   value: string | number;
   hint: string;
-  to: "/library" | "/study" | "/tests" | "/billing";
+  to: "/library" | "/study" | "/exams" | "/billing";
   icon: typeof BookOpen;
 }) {
   return (
@@ -278,7 +278,7 @@ function ActionCard({
   title,
   desc,
 }: {
-  to: "/study" | "/tests" | "/exams";
+  to: "/study" | "/exams" | "/exams";
   icon: typeof BookOpen;
   title: string;
   desc: string;

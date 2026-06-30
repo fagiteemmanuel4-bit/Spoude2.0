@@ -67,7 +67,7 @@ function SetPlayPage() {
 }
 
 function BackTo({ kind }: { kind: SetRow["kind"] }) {
-  const to = kind === "study" ? "/study" : kind === "test" ? "/tests" : "/exams";
+  const to = kind === "study" ? "/study" : kind === "test" ? "/exams" : "/exams";
   return (
     <Link
       to={to}
@@ -224,7 +224,7 @@ function QuizPlayer({ set }: { set: SetRow }) {
               <RotateCcw className="h-4 w-4" /> Try again
             </button>
             <button
-              onClick={() => navigate({ to: set.kind === "test" ? "/tests" : "/exams" })}
+              onClick={() => navigate({ to: set.kind === "test" ? "/exams" : "/exams" })}
               className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:shadow-glow transition-all"
             >
               Done
