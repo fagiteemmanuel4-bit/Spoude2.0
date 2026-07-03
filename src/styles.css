@@ -248,3 +248,37 @@
 
 /* Force dark scheme sitewide */
 html { color-scheme: dark; }
+
+/* Skeleton shimmer — soft blue sweep */
+@keyframes lumio-skel {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@utility skeleton-shimmer {
+  background: linear-gradient(90deg,
+    oklch(1 0 0 / 0.04) 0%,
+    oklch(0.58 0.22 265 / 0.10) 50%,
+    oklch(1 0 0 / 0.04) 100%);
+  background-size: 200% 100%;
+  animation: lumio-skel 1.6s ease-in-out infinite;
+}
+
+/* Premium pill button */
+@utility btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: background-color 200ms ease, transform 200ms ease, box-shadow 200ms ease, color 200ms ease;
+}
+
+/* Global focus polish */
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px oklch(0 0 0), 0 0 0 4px oklch(0.58 0.22 265 / 0.55);
+  border-radius: 10px;
+}
