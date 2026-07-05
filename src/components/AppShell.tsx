@@ -1,13 +1,11 @@
-import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import {
-  LayoutDashboard,
   FolderOpen,
   Settings,
   BookOpenCheck,
   GraduationCap,
   CreditCard,
-  Users,
   Home,
   Plus,
   User,
@@ -15,14 +13,17 @@ import {
   Wifi,
   Search,
   Bell,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { LumioMark, LumioWordmark } from "@/components/Logo";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/lib/theme";
 
 type NavItem = {
   to:
-    | "/lumio" | "/dashboard" | "/library" | "/study" | "/exams"
+    | "/lumio" | "/library" | "/study" | "/exams"
     | "/billing" | "/settings" | "/profile";
   label: string;
   icon: typeof Home;
@@ -30,7 +31,6 @@ type NavItem = {
 };
 
 const TRAY_NAV: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, group: "library" },
   { to: "/library", label: "Library", icon: FolderOpen, group: "library" },
   { to: "/study", label: "Study", icon: BookOpenCheck, group: "learn" },
   { to: "/exams", label: "Take an exam", icon: GraduationCap, group: "learn" },
@@ -94,16 +94,17 @@ function DesktopTopBar() {
         <span className="text-[11px] uppercase tracking-widest text-muted-foreground">Study workspace</span>
       </div>
       <div className="flex items-center gap-2">
-        <div className="hidden xl:flex items-center gap-2 rounded-md border border-border bg-card/60 px-2.5 py-1.5 w-72">
+        <div className="hidden xl:flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3 py-1.5 w-72 backdrop-blur">
           <Search className="h-3.5 w-3.5 text-muted-foreground" />
-          <input placeholder="Search Lumio…" className="w-full bg-transparent outline-none text-xs" />
+          <input placeholder="Search Lumio…" className="w-full bg-transparent outline-none text-xs placeholder:text-muted-foreground/70" />
         </div>
-        <button className="p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground" aria-label="Notifications">
+        <ThemeToggle />
+        <button className="p-1.5 rounded-full hover:bg-sidebar-accent text-muted-foreground transition-colors" aria-label="Notifications">
           <Bell className="h-4 w-4" />
         </button>
         <Link
           to="/profile"
-          className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-sidebar-accent transition-colors"
+          className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-sidebar-accent transition-colors"
         >
           <div className="h-6 w-6 rounded-full bg-primary/20 text-primary text-[11px] font-semibold flex items-center justify-center">
             {name.charAt(0).toUpperCase()}
@@ -145,7 +146,7 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
     { to: "/profile", label: "Profile", icon: User, group: "account" },
   ];
   return (
-    <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-border bg-sidebar/70 px-4 py-6 sticky top-12 h-[calc(100vh-3rem-1.5rem)]">
+    <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-border/60 bg-sidebar backdrop-blur-xl px-4 py-6 sticky top-12 h-[calc(100vh-3rem-1.5rem)]">
       <nav className="flex flex-col gap-5">
         {(["library", "learn", "account"] as const).map((g) => (
           <div key={g}>
@@ -159,9 +160,9 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
                   <Link
                     key={to}
                     to={to}
-                    className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ripple ${
+                    className={`group flex items-center gap-3 px-3 py-2 rounded-full text-[13px] font-medium transition-all ripple ${
                       active
-                        ? "bg-primary/15 text-primary shadow-[inset_0_0_0_1px_oklch(0.88_0.19_96/0.35)]"
+                        ? "bg-primary/12 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--color-primary)_35%,transparent)]"
                         : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
                     }`}
                   >
@@ -179,15 +180,25 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
 }
 
 function MobileHeader() {
+  const { theme, toggle } = useTheme();
   return (
-    <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14 bg-background/90 backdrop-blur border-b border-border">
+    <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14 bg-background/75 backdrop-blur-xl border-b border-border/70">
       <div className="flex items-center gap-2">
         <LumioMark size={24} />
         <span className="font-bold text-lg tracking-tight" style={{ fontFamily: "var(--font-display)" }}>Lumio</span>
       </div>
-      <Link to="/lumio" className="p-2 rounded-md text-muted-foreground hover:text-foreground" aria-label="Notifications">
-        <Bell className="h-5 w-5" />
-      </Link>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={toggle}
+          aria-label="Toggle theme"
+          className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+        >
+          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
+        <Link to="/lumio" className="p-2 rounded-full text-muted-foreground hover:text-foreground" aria-label="Notifications">
+          <Bell className="h-5 w-5" />
+        </Link>
+      </div>
     </div>
   );
 }
@@ -196,39 +207,41 @@ function MobileBottomNav({ pathname, onPlus }: { pathname: string; onPlus: () =>
   const homeActive = pathname === "/lumio";
   const profileActive = pathname.startsWith("/profile");
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 h-[72px] bg-background/95 backdrop-blur border-t border-border">
-      <div className="grid grid-cols-3 h-full items-center px-6">
-        <Link to="/lumio" className={`flex flex-col items-center justify-center gap-0.5 ${homeActive ? "text-primary" : "text-muted-foreground"}`}>
-          <Home className={`h-6 w-6 ${homeActive ? "fill-primary/20" : ""}`} strokeWidth={homeActive ? 2.4 : 1.8} />
+    <div className="lg:hidden fixed bottom-4 inset-x-4 z-40 pointer-events-none">
+      <nav
+        className="pointer-events-auto mx-auto max-w-sm h-16 rounded-full border border-border/70 bg-background/70 backdrop-blur-2xl shadow-elev-2 grid grid-cols-3 items-center px-6"
+      >
+        <Link to="/lumio" className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${homeActive ? "text-primary" : "text-muted-foreground"}`}>
+          <Home className="h-5 w-5" strokeWidth={homeActive ? 2.4 : 1.8} />
           <span className="text-[10px] font-medium">Home</span>
         </Link>
         <div className="flex justify-center">
           <button
             onClick={onPlus}
             aria-label="Open menu"
-            className="fab-plus -mt-6 h-14 w-14 rounded-2xl flex items-center justify-center active:scale-95 transition-transform"
+            className="fab-plus -mt-8 h-14 w-14 rounded-full flex items-center justify-center active:scale-95 transition-transform"
           >
-            <Plus className="h-7 w-7" strokeWidth={2.6} />
+            <Plus className="h-6 w-6" strokeWidth={2.6} />
           </button>
         </div>
-        <Link to="/profile" className={`flex flex-col items-center justify-center gap-0.5 ${profileActive ? "text-primary" : "text-muted-foreground"}`}>
-          <User className={`h-6 w-6`} strokeWidth={profileActive ? 2.4 : 1.8} />
+        <Link to="/profile" className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${profileActive ? "text-primary" : "text-muted-foreground"}`}>
+          <User className="h-5 w-5" strokeWidth={profileActive ? 2.4 : 1.8} />
           <span className="text-[10px] font-medium">Profile</span>
         </Link>
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }
 
 function MobileTray({ onClose }: { onClose: () => void }) {
   return (
     <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end animate-fade-up">
-      <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-      <div className="relative bg-card border-t border-border rounded-t-3xl p-5 pb-8">
-        <div className="mx-auto h-1 w-10 rounded-full bg-muted-foreground/40 mb-4" />
+      <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-foreground/40 backdrop-blur-md" />
+      <div className="relative glass-strong rounded-t-[28px] p-5 pb-10">
+        <div className="mx-auto h-1.5 w-10 rounded-full bg-muted-foreground/40 mb-4" />
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Jump to</h3>
-          <button onClick={onClose} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground" aria-label="Close">
+          <button onClick={onClose} className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-sidebar-accent" aria-label="Close">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -237,9 +250,9 @@ function MobileTray({ onClose }: { onClose: () => void }) {
             <Link
               key={to}
               to={to}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-background/60 hover:border-primary/40 active:scale-95 transition-all"
+              className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/70 bg-background/40 backdrop-blur-md hover:border-primary/40 hover:bg-background/60 active:scale-95 transition-all"
             >
-              <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+              <div className="h-10 w-10 rounded-2xl bg-primary/12 text-primary flex items-center justify-center">
                 <Icon className="h-5 w-5" />
               </div>
               <span className="text-[11px] font-medium text-center">{label}</span>
@@ -248,5 +261,18 @@ function MobileTray({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      aria-label="Toggle theme"
+      className="p-1.5 rounded-full hover:bg-sidebar-accent text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
   );
 }
