@@ -16,8 +16,25 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  Library,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/study")({
   head: () => ({ meta: [{ title: "Study — Lumio" }] }),
@@ -181,12 +198,14 @@ function StudyPage() {
               <Markdown>{pageText}</Markdown>
             ) : (
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" /> Reading your document and preparing the lesson…
+                <Loader2 className="h-4 w-4 animate-spin" /> Reading your document and preparing the
+                lesson…
               </div>
             )}
             {streaming && pageText && isLastPage && (
               <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" /> writing…
+                <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" />{" "}
+                writing…
               </div>
             )}
           </article>
@@ -230,47 +249,100 @@ function StudyPage() {
             <BookOpenCheck className="h-7 w-7 text-primary" /> Study
           </h1>
           <p className="mt-1 text-muted-foreground">
-            Pick a document and a teaching style. Your tutor will read it and teach you page by page — tap
-            <span className="text-foreground font-medium"> Continue </span> for a deeper page anytime.
+            Pick a document and a teaching style. Your tutor will read it and teach you page by page
+            — tap
+            <span className="text-foreground font-medium"> Continue </span> for a deeper page
+            anytime.
           </p>
         </div>
         {usage && (
           <div className="text-xs text-muted-foreground">
-            <span className="text-foreground font-medium">{usage.used}</span> / {usage.limit} lessons & exams this month · {plan.name}
-            <Link to="/billing" className="ml-2 text-primary hover:underline">Manage</Link>
+            <span className="text-foreground font-medium">{usage.used}</span> / {usage.limit}{" "}
+            lessons & exams this month · {plan.name}
+            <Link to="/billing" className="ml-2 text-primary hover:underline">
+              Manage
+            </Link>
           </div>
         )}
       </header>
 
-      <section className="surface p-6 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">1. Choose a document</h2>
-        <MaterialPicker
-          value={material?.id ?? null}
-          onChange={(_id, m) => setMaterial(m)}
-          emptyHint={<span>Your library is empty. <Link to="/library" className="text-primary hover:underline">Upload one</Link> to begin.</span>}
-        />
-      </section>
-
-      <section className="surface p-6 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">2. Pick a teaching style</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-          {TEACHING_STYLES.map((s) => {
-            const active = styleId === s.id;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setStyleId(s.id)}
-                className={`text-left rounded-lg border p-3 transition-all ripple ${active ? "border-primary bg-primary-soft shadow-elev-1" : "border-border bg-card hover:border-primary/40"}`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg leading-none">{s.emoji}</span>
-                  <span className="text-sm font-semibold">{s.label}</span>
+      <section className="surface p-6 space-y-6">
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            1. Choose a document
+          </h2>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:border-primary/40 transition-all group">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <BookOpenCheck className="h-5 w-5" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <div className="text-sm font-semibold truncate">
+                      {material ? material.title : "Select from your library"}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {material ? `${material.file_name}` : "Tap to pick a file"}
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1 text-[11px] text-muted-foreground line-clamp-2">{s.blurb}</div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               </button>
-            );
-          })}
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <div className="flex items-center justify-between gap-4 mb-2">
+                  <DialogTitle>Your Library</DialogTitle>
+                  <Link
+                    to="/lumio-library"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                  >
+                    <Library className="h-3.5 w-3.5" /> Search Lumio Library
+                  </Link>
+                </div>
+              </DialogHeader>
+              <MaterialPicker
+                value={material?.id ?? null}
+                onChange={(_id, m) => setMaterial(m)}
+                emptyHint={
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-muted-foreground">Your library is empty.</p>
+                    <Link
+                      to="/library"
+                      className="mt-2 inline-block text-sm text-primary font-medium hover:underline"
+                    >
+                      Upload to begin
+                    </Link>
+                  </div>
+                }
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            2. Pick a teaching style
+          </h2>
+          <Select value={styleId} onValueChange={setStyleId}>
+            <SelectTrigger className="w-full h-14 rounded-xl">
+              <SelectValue placeholder="Select a style" />
+            </SelectTrigger>
+            <SelectContent>
+              {TEACHING_STYLES.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  <div className="flex items-center gap-2 py-1">
+                    <span className="text-lg">{s.emoji}</span>
+                    <div className="text-left">
+                      <div className="text-sm font-semibold">{s.label}</div>
+                      <div className="text-[10px] text-muted-foreground">{s.blurb}</div>
+                    </div>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </section>
 

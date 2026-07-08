@@ -5,7 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { LumioMark } from "@/components/Logo";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, ShieldCheck, ArrowRight, Sparkles, User as UserIcon } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  Lock,
+  ShieldCheck,
+  ArrowRight,
+  Sparkles,
+  User as UserIcon,
+} from "lucide-react";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
 
@@ -60,25 +68,41 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const parsed = signupSchema.safeParse(form);
-        if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+        if (!parsed.success) {
+          toast.error(parsed.error.issues[0].message);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: parsed.data.password,
-          options: { emailRedirectTo: `${window.location.origin}/lumio`, data: { display_name: parsed.data.name } },
+          options: {
+            emailRedirectTo: `${window.location.origin}/lumio`,
+            data: { display_name: parsed.data.name },
+          },
         });
         if (error) throw error;
         toast.success("Account created. Welcome to Lumio!");
         navigate({ to: "/lumio", replace: true });
       } else {
         const parsed = signinSchema.safeParse(form);
-        if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
-        const { error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password });
+        if (!parsed.success) {
+          toast.error(parsed.error.issues[0].message);
+          return;
+        }
+        const { error } = await supabase.auth.signInWithPassword({
+          email: parsed.data.email,
+          password: parsed.data.password,
+        });
         if (error) throw error;
         const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aal?.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel) {
           const { data: factors } = await supabase.auth.mfa.listFactors();
           const totp = factors?.totp?.[0];
-          if (totp) { setMfa({ factorId: totp.id, code: "" }); setStep("mfa"); return; }
+          if (totp) {
+            setMfa({ factorId: totp.id, code: "" });
+            setStep("mfa");
+            return;
+          }
         }
         toast.success("Welcome back");
         navigate({ to: "/lumio", replace: true });
@@ -92,12 +116,21 @@ function AuthPage() {
 
   const verifyMfa = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mfa.code.length !== 6) { toast.error("Enter the 6-digit code"); return; }
+    if (mfa.code.length !== 6) {
+      toast.error("Enter the 6-digit code");
+      return;
+    }
     setLoading(true);
     try {
-      const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: mfa.factorId });
+      const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({
+        factorId: mfa.factorId,
+      });
       if (cErr) throw cErr;
-      const { error } = await supabase.auth.mfa.verify({ factorId: mfa.factorId, challengeId: challenge.id, code: mfa.code });
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfa.factorId,
+        challengeId: challenge.id,
+        code: mfa.code,
+      });
       if (error) throw error;
       toast.success("Verified");
       navigate({ to: "/lumio", replace: true });
@@ -110,8 +143,14 @@ function AuthPage() {
 
   const google = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
-    if (result.error) { toast.error(result.error.message ?? "Google sign-in failed"); setLoading(false); return; }
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin + "/auth",
+    });
+    if (result.error) {
+      toast.error(result.error.message ?? "Google sign-in failed");
+      setLoading(false);
+      return;
+    }
     if (result.redirected) return;
     navigate({ to: "/lumio", replace: true });
   };
@@ -193,7 +232,10 @@ function AuthPage() {
                   {mode === "signup" && (
                     <Field label="Name" icon={<UserIcon className="h-4 w-4" />}>
                       <input
-                        type="text" autoComplete="name" required maxLength={80}
+                        type="text"
+                        autoComplete="name"
+                        required
+                        maxLength={80}
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         className="w-full bg-transparent outline-none text-sm"
@@ -203,7 +245,10 @@ function AuthPage() {
                   )}
                   <Field label="Email" icon={<Mail className="h-4 w-4" />}>
                     <input
-                      type="email" autoComplete="email" required maxLength={255}
+                      type="email"
+                      autoComplete="email"
+                      required
+                      maxLength={255}
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
                       className="w-full bg-transparent outline-none text-sm"
@@ -214,7 +259,8 @@ function AuthPage() {
                     <input
                       type="password"
                       autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                      required maxLength={72}
+                      required
+                      maxLength={72}
                       value={form.password}
                       onChange={(e) => setForm({ ...form, password: e.target.value })}
                       className="w-full bg-transparent outline-none text-sm"
@@ -223,10 +269,15 @@ function AuthPage() {
                   </Field>
 
                   <button
-                    type="submit" disabled={loading}
+                    type="submit"
+                    disabled={loading}
                     className="ripple w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 text-[13px] font-semibold shadow-elev-1 hover:shadow-glow transition-all disabled:opacity-60"
                   >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowRight className="h-4 w-4" />
+                    )}
                     {mode === "signup" ? "Create account" : "Sign in"}
                   </button>
                 </form>
@@ -247,20 +298,32 @@ function AuthPage() {
                   <ShieldCheck className="h-5 w-5 text-primary" />
                 </div>
                 <h2 className="mt-4 text-xl font-bold tracking-tight">Two-factor verification</h2>
-                <p className="mt-1.5 text-sm text-muted-foreground">Enter the 6-digit code from your authenticator.</p>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Enter the 6-digit code from your authenticator.
+                </p>
                 <form onSubmit={verifyMfa} className="mt-5 space-y-3">
                   <input
-                    autoFocus inputMode="numeric" pattern="\d{6}" maxLength={6}
+                    autoFocus
+                    inputMode="numeric"
+                    pattern="\d{6}"
+                    maxLength={6}
                     value={mfa.code}
-                    onChange={(e) => setMfa({ ...mfa, code: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+                    onChange={(e) =>
+                      setMfa({ ...mfa, code: e.target.value.replace(/\D/g, "").slice(0, 6) })
+                    }
                     className="w-full text-center text-2xl font-mono tracking-[0.5em] bg-secondary rounded-lg py-3 outline-none focus:ring-2 focus:ring-ring"
                     placeholder="000000"
                   />
                   <button
-                    type="submit" disabled={loading}
+                    type="submit"
+                    disabled={loading}
                     className="ripple w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 text-[13px] font-semibold shadow-elev-1 hover:shadow-glow transition-all disabled:opacity-60"
                   >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="h-4 w-4" />
+                    )}
                     Verify
                   </button>
                 </form>
@@ -269,8 +332,13 @@ function AuthPage() {
           </div>
 
           {/* Feature strip — Linear / Notion-style trust row */}
-          <div className="mt-5 flex items-center justify-center gap-4 text-[11px] text-muted-foreground animate-fade-up" style={{ animationDelay: "120ms" }}>
-            <span className="inline-flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-primary" /> AI tutor</span>
+          <div
+            className="mt-5 flex items-center justify-center gap-4 text-[11px] text-muted-foreground animate-fade-up"
+            style={{ animationDelay: "120ms" }}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-primary" /> AI tutor
+            </span>
             <span className="opacity-40">·</span>
             <span>Flashcards</span>
             <span className="opacity-40">·</span>
@@ -279,8 +347,13 @@ function AuthPage() {
 
           <p className="mt-5 text-center text-[11px] text-muted-foreground">
             By continuing you agree to our{" "}
-            <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">Terms</Link>{" · "}
-            <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">Privacy</Link>
+            <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
+              Terms
+            </Link>
+            {" · "}
+            <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">
+              Privacy
+            </Link>
           </p>
         </div>
       </main>
@@ -288,10 +361,20 @@ function AuthPage() {
   );
 }
 
-function Field({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Field({
+  label,
+  icon,
+  children,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">{label}</span>
+      <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">
+        {label}
+      </span>
       <div className="flex items-center gap-2.5 rounded-xl border border-input bg-card/60 px-3 py-2.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40 transition-all">
         <span className="text-muted-foreground">{icon}</span>
         {children}
@@ -303,10 +386,22 @@ function Field({ label, icon, children }: { label: string; icon: React.ReactNode
 function GoogleIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden>
-      <path d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.49h4.84A4.14 4.14 0 0112 13.55v2.27h2.92A8.77 8.77 0 0017.64 9.2z" fill="#4285F4"/>
-      <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.27c-.8.54-1.83.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 009 18z" fill="#34A853"/>
-      <path d="M3.97 10.71A5.4 5.4 0 013.68 9c0-.59.1-1.17.29-1.71V4.96H.96A9 9 0 000 9c0 1.45.35 2.83.96 4.04l3.01-2.33z" fill="#FBBC05"/>
-      <path d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 00.96 4.96L3.97 7.3C4.68 5.16 6.66 3.58 9 3.58z" fill="#EA4335"/>
+      <path
+        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.49h4.84A4.14 4.14 0 0112 13.55v2.27h2.92A8.77 8.77 0 0017.64 9.2z"
+        fill="#4285F4"
+      />
+      <path
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.27c-.8.54-1.83.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 009 18z"
+        fill="#34A853"
+      />
+      <path
+        d="M3.97 10.71A5.4 5.4 0 013.68 9c0-.59.1-1.17.29-1.71V4.96H.96A9 9 0 000 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 00.96 4.96L3.97 7.3C4.68 5.16 6.66 3.58 9 3.58z"
+        fill="#EA4335"
+      />
     </svg>
   );
 }

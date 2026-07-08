@@ -4,11 +4,24 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  BookOpen, FileText, GraduationCap, Download, Trash2, Loader2, Search,
-  Upload as UploadIcon, Pin, PinOff, Globe, Lock as LockIcon, Copy, X,
+  BookOpen,
+  FileText,
+  GraduationCap,
+  Download,
+  Trash2,
+  Loader2,
+  Search,
+  Upload as UploadIcon,
+  Pin,
+  PinOff,
+  Globe,
+  Lock as LockIcon,
+  Copy,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { UploadDialog } from "@/components/UploadDialog";
+import { Skel } from "@/components/Skeletons";
 
 const searchSchema = z.object({ type: z.enum(["notes", "homework", "exam"]).optional() });
 
@@ -19,9 +32,24 @@ export const Route = createFileRoute("/_authenticated/library")({
 });
 
 const TABS = [
-  { id: "notes", label: "Class notes", icon: BookOpen, spineTint: "from-amber-300/40 to-amber-500/10" },
-  { id: "homework", label: "Homework", icon: FileText, spineTint: "from-emerald-300/40 to-emerald-500/10" },
-  { id: "exam", label: "Past exams", icon: GraduationCap, spineTint: "from-violet-300/40 to-violet-500/10" },
+  {
+    id: "notes",
+    label: "Class notes",
+    icon: BookOpen,
+    spineTint: "from-amber-300/40 to-amber-500/10",
+  },
+  {
+    id: "homework",
+    label: "Homework",
+    icon: FileText,
+    spineTint: "from-emerald-300/40 to-emerald-500/10",
+  },
+  {
+    id: "exam",
+    label: "Past exams",
+    icon: GraduationCap,
+    spineTint: "from-violet-300/40 to-violet-500/10",
+  },
 ] as const;
 
 type Material = {
@@ -78,8 +106,13 @@ function Library() {
   const rest = filtered.filter((m) => !m.is_pinned);
 
   const download = async (m: Material) => {
-    const { data, error } = await supabase.storage.from("materials").createSignedUrl(m.storage_path, 60);
-    if (error || !data) { toast.error("Could not generate download link"); return; }
+    const { data, error } = await supabase.storage
+      .from("materials")
+      .createSignedUrl(m.storage_path, 60);
+    if (error || !data) {
+      toast.error("Could not generate download link");
+      return;
+    }
     window.open(data.signedUrl, "_blank");
   };
 
@@ -103,17 +136,27 @@ function Library() {
   };
 
   const copyPublicLink = async (m: Material) => {
-    if (!m.is_public) { toast.error("Turn on public first"); return; }
+    if (!m.is_public) {
+      toast.error("Turn on public first");
+      return;
+    }
     const url = `${window.location.origin}/library?type=${m.type}#m=${m.id}`;
-    try { await navigator.clipboard.writeText(url); toast.success("Link copied"); }
-    catch { toast.error("Could not copy link"); }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied");
+    } catch {
+      toast.error("Could not copy link");
+    }
   };
 
   const remove = async (m: Material) => {
     if (!confirm(`Delete "${m.title}"?`)) return;
     const { error: sErr } = await supabase.storage.from("materials").remove([m.storage_path]);
     const { error } = await supabase.from("materials").delete().eq("id", m.id);
-    if (error || sErr) { toast.error("Could not delete"); return; }
+    if (error || sErr) {
+      toast.error("Could not delete");
+      return;
+    }
     toast.success("Deleted");
     qc.invalidateQueries({ queryKey: ["materials"] });
     qc.invalidateQueries({ queryKey: ["materials-stats"] });
@@ -123,13 +166,22 @@ function Library() {
     <div className="space-y-6 animate-fade-up">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Library</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Your bookshelf — tap and hold a book for more.</p>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <BookOpen className="h-7 w-7 text-primary" strokeWidth={1.5} /> Library
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Your bookshelf — tap and hold a book for more.
+          </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2 rounded-full border border-input bg-card px-3 py-2 flex-1 sm:w-72 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40 transition-all">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search title, subject…" className="w-full bg-transparent outline-none text-sm" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search title, subject…"
+              className="w-full bg-transparent outline-none text-sm"
+            />
           </div>
           <button
             onClick={() => setUploadOpen(true)}
@@ -154,7 +206,9 @@ function Library() {
             >
               <Icon className="h-4 w-4" />
               {label}
-              <span className={`absolute left-3 right-3 -bottom-px h-0.5 rounded-full bg-primary transition-transform duration-300 origin-left ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+              <span
+                className={`absolute left-3 right-3 -bottom-px h-0.5 rounded-full bg-primary transition-transform duration-300 origin-left ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`}
+              />
             </button>
           );
         })}
@@ -168,11 +222,21 @@ function Library() {
         <>
           {pinned.length > 0 && (
             <ShelfSection title="Pinned" count={pinned.length}>
-              <Bookshelf items={pinned} onOpenMenu={setMenu} onTogglePin={togglePin} activeType={activeType} />
+              <Bookshelf
+                items={pinned}
+                onOpenMenu={setMenu}
+                onTogglePin={togglePin}
+                activeType={activeType}
+              />
             </ShelfSection>
           )}
           <ShelfSection title={pinned.length ? "All books" : "Your shelf"} count={rest.length}>
-            <Bookshelf items={rest} onOpenMenu={setMenu} onTogglePin={togglePin} activeType={activeType} />
+            <Bookshelf
+              items={rest}
+              onOpenMenu={setMenu}
+              onTogglePin={togglePin}
+              activeType={activeType}
+            />
           </ShelfSection>
         </>
       )}
@@ -183,23 +247,50 @@ function Library() {
           x={menu.x}
           y={menu.y}
           onClose={() => setMenu(null)}
-          onDownload={() => { download(menu.material); setMenu(null); }}
-          onDelete={() => { remove(menu.material); setMenu(null); }}
-          onTogglePin={() => { togglePin(menu.material); setMenu(null); }}
-          onTogglePublic={() => { togglePublic(menu.material); setMenu(null); }}
-          onCopyLink={() => { copyPublicLink(menu.material); setMenu(null); }}
+          onDownload={() => {
+            download(menu.material);
+            setMenu(null);
+          }}
+          onDelete={() => {
+            remove(menu.material);
+            setMenu(null);
+          }}
+          onTogglePin={() => {
+            togglePin(menu.material);
+            setMenu(null);
+          }}
+          onTogglePublic={() => {
+            togglePublic(menu.material);
+            setMenu(null);
+          }}
+          onCopyLink={() => {
+            copyPublicLink(menu.material);
+            setMenu(null);
+          }}
         />
       )}
     </div>
   );
 }
 
-function ShelfSection({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
+function ShelfSection({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
   return (
     <section>
       <div className="flex items-baseline justify-between mb-3 px-1">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{title}</h2>
-        <span className="text-[11px] text-muted-foreground">{count} {count === 1 ? "book" : "books"}</span>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          {title}
+        </h2>
+        <span className="text-[11px] text-muted-foreground">
+          {count} {count === 1 ? "book" : "books"}
+        </span>
       </div>
       {children}
     </section>
@@ -210,7 +301,10 @@ function ShelfSection({ title, count, children }: { title: string; count: number
  * Wooden-shelf style grid. Each row of books sits on a subtle shelf-plank.
  */
 function Bookshelf({
-  items, onOpenMenu, onTogglePin, activeType,
+  items,
+  onOpenMenu,
+  onTogglePin,
+  activeType,
 }: {
   items: Material[];
   onOpenMenu: (v: { material: Material; x: number; y: number }) => void;
@@ -222,7 +316,13 @@ function Bookshelf({
     <div className="relative">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
         {items.map((m) => (
-          <BookCard key={m.id} m={m} tint={tint} onOpenMenu={onOpenMenu} onTogglePin={onTogglePin} />
+          <BookCard
+            key={m.id}
+            m={m}
+            tint={tint}
+            onOpenMenu={onOpenMenu}
+            onTogglePin={onTogglePin}
+          />
         ))}
       </div>
     </div>
@@ -230,7 +330,10 @@ function Bookshelf({
 }
 
 function BookCard({
-  m, tint, onOpenMenu, onTogglePin,
+  m,
+  tint,
+  onOpenMenu,
+  onTogglePin,
 }: {
   m: Material;
   tint: string;
@@ -251,7 +354,12 @@ function BookCard({
       openMenuAt(touch.clientX, touch.clientY);
     }, 450);
   };
-  const clearPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
+  const clearPress = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
 
   const onContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -279,23 +387,26 @@ function BookCard({
           {/* Page edge */}
           <div className="absolute inset-y-1 right-0 w-1 rounded-sm bg-gradient-to-b from-white/70 via-white/40 to-white/70" />
           {/* Cover content */}
-          <div className="relative h-full flex flex-col justify-between p-3">
+          <div className="relative h-full flex flex-col justify-between p-4">
             <div className="flex items-start justify-between gap-2">
               {m.subject && (
-                <span className="text-[9px] uppercase tracking-widest font-semibold text-foreground/70 line-clamp-1">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-foreground/60 line-clamp-1">
                   {m.subject}
                 </span>
               )}
               <div className="flex flex-col items-end gap-1">
-                {m.is_pinned && <Pin className="h-3 w-3 text-primary drop-shadow" fill="currentColor" />}
+                {m.is_pinned && (
+                  <Pin className="h-3 w-3 text-primary drop-shadow" fill="currentColor" />
+                )}
                 {m.is_public && <Globe className="h-3 w-3 text-emerald-500" />}
               </div>
             </div>
-            <div>
-              <div className="text-[12px] font-bold leading-tight text-foreground line-clamp-3">
+            <div className="space-y-1.5">
+              <div className="text-[13px] font-bold leading-snug text-foreground line-clamp-3">
                 {m.title}
               </div>
-              <div className="mt-1.5 text-[9px] text-foreground/50 truncate">
+              <div className="text-[10px] font-medium text-foreground/40 flex items-center gap-1.5">
+                <div className="h-1 w-1 rounded-full bg-foreground/20" />
                 {(m.file_size / 1024).toFixed(0)} KB
               </div>
             </div>
@@ -303,7 +414,10 @@ function BookCard({
         </div>
         {/* Pin quick action (visible on hover for desktop) */}
         <button
-          onClick={(e) => { e.stopPropagation(); onTogglePin(m); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePin(m);
+          }}
           aria-label={m.is_pinned ? "Unpin" : "Pin"}
           className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-popover border border-border shadow-elev-1 opacity-0 group-hover:opacity-100 hover:opacity-100 hidden sm:flex items-center justify-center text-muted-foreground hover:text-primary transition-all"
         >
@@ -317,7 +431,8 @@ function BookCard({
         style={{
           background:
             "linear-gradient(to bottom, color-mix(in oklch, var(--color-foreground) 18%, transparent), color-mix(in oklch, var(--color-foreground) 4%, transparent))",
-          boxShadow: "0 6px 12px -6px color-mix(in oklch, var(--color-foreground) 30%, transparent)",
+          boxShadow:
+            "0 6px 12px -6px color-mix(in oklch, var(--color-foreground) 30%, transparent)",
         }}
       />
     </div>
@@ -325,20 +440,40 @@ function BookCard({
 }
 
 function ContextMenu({
-  material: m, x, y, onClose, onDownload, onDelete, onTogglePin, onTogglePublic, onCopyLink,
+  material: m,
+  x,
+  y,
+  onClose,
+  onDownload,
+  onDelete,
+  onTogglePin,
+  onTogglePublic,
+  onCopyLink,
 }: {
-  material: Material; x: number; y: number;
+  material: Material;
+  x: number;
+  y: number;
   onClose: () => void;
-  onDownload: () => void; onDelete: () => void;
-  onTogglePin: () => void; onTogglePublic: () => void; onCopyLink: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+  onTogglePin: () => void;
+  onTogglePublic: () => void;
+  onCopyLink: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [onClose]);
 
   // Clamp position so menu never overflows viewport (mobile long-press)
@@ -349,7 +484,10 @@ function ContextMenu({
 
   return (
     <>
-      <div className="fixed inset-0 z-[70] bg-foreground/30 backdrop-blur-sm animate-fade-up" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-[70] bg-foreground/30 backdrop-blur-sm animate-fade-up"
+        onClick={onClose}
+      />
       <div
         ref={ref}
         className="fixed z-[80] w-60 rounded-2xl border border-border shadow-elev-3 overflow-hidden animate-fade-up"
@@ -360,11 +498,19 @@ function ContextMenu({
             <div className="text-[12px] font-semibold truncate">{m.title}</div>
             <div className="text-[10px] text-muted-foreground truncate">{m.file_name}</div>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-0.5" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground p-0.5"
+            aria-label="Close"
+          >
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
-        <MenuItem icon={m.is_pinned ? PinOff : Pin} label={m.is_pinned ? "Unpin" : "Pin to top"} onClick={onTogglePin} />
+        <MenuItem
+          icon={m.is_pinned ? PinOff : Pin}
+          label={m.is_pinned ? "Unpin" : "Pin to top"}
+          onClick={onTogglePin}
+        />
         <MenuItem icon={Download} label="Download" onClick={onDownload} />
         <MenuItem
           icon={m.is_public ? LockIcon : Globe}
@@ -372,9 +518,7 @@ function ContextMenu({
           hint={m.is_public ? "Anyone can view" : "Share with anyone"}
           onClick={onTogglePublic}
         />
-        {m.is_public && (
-          <MenuItem icon={Copy} label="Copy public link" onClick={onCopyLink} />
-        )}
+        {m.is_public && <MenuItem icon={Copy} label="Copy public link" onClick={onCopyLink} />}
         <div className="h-px bg-border/70" />
         <MenuItem icon={Trash2} label="Delete" danger onClick={onDelete} />
       </div>
@@ -383,16 +527,25 @@ function ContextMenu({
 }
 
 function MenuItem({
-  icon: Icon, label, hint, onClick, danger,
+  icon: Icon,
+  label,
+  hint,
+  onClick,
+  danger,
 }: {
   icon: React.ComponentType<{ className?: string }>;
-  label: string; hint?: string; onClick: () => void; danger?: boolean;
+  label: string;
+  hint?: string;
+  onClick: () => void;
+  danger?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-left transition-colors ${
-        danger ? "text-destructive hover:bg-destructive/10" : "text-foreground hover:bg-sidebar-accent"
+        danger
+          ? "text-destructive hover:bg-destructive/10"
+          : "text-foreground hover:bg-sidebar-accent"
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -407,10 +560,15 @@ function MenuItem({
 function EmptyShelf({ onUpload, query }: { onUpload: () => void; query: string }) {
   return (
     <div className="relative rounded-3xl border border-dashed border-border p-10 text-center overflow-hidden">
-      <div aria-hidden className="absolute inset-0 opacity-40" style={{
-        backgroundImage: "repeating-linear-gradient(90deg, color-mix(in oklch, var(--color-foreground) 6%, transparent) 0 2px, transparent 2px 22px)",
-        maskImage: "linear-gradient(to bottom, black, transparent)",
-      }} />
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, color-mix(in oklch, var(--color-foreground) 6%, transparent) 0 2px, transparent 2px 22px)",
+          maskImage: "linear-gradient(to bottom, black, transparent)",
+        }}
+      />
       <div className="relative">
         <div className="mx-auto h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
           <BookOpen className="h-6 w-6 text-primary" />
@@ -419,7 +577,9 @@ function EmptyShelf({ onUpload, query }: { onUpload: () => void; query: string }
           {query ? "No matches" : "This shelf is empty"}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          {query ? "Try a different search." : "Upload a document to place the first book on the shelf."}
+          {query
+            ? "Try a different search."
+            : "Upload a document to place the first book on the shelf."}
         </p>
         {!query && (
           <button
@@ -437,10 +597,10 @@ function EmptyShelf({ onUpload, query }: { onUpload: () => void; query: string }
 function BookshelfSkeleton() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
         <div key={i} className="flex flex-col items-center">
-          <div className="w-full aspect-[3/4] rounded-l-md rounded-r-lg bg-muted animate-pulse" />
-          <div className="w-[110%] h-1.5 -mt-0.5 rounded-b-sm bg-foreground/10" />
+          <Skel className="w-full aspect-[3/4] rounded-l-md rounded-r-lg" />
+          <div className="w-[110%] h-1.5 -mt-0.5 rounded-b-sm bg-foreground/5" />
         </div>
       ))}
     </div>

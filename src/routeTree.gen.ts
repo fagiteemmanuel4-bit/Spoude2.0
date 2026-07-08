@@ -20,6 +20,7 @@ import { Route as ApiTeachRouteImport } from './routes/api/teach'
 import { Route as AuthenticatedStudyRouteImport } from './routes/_authenticated/study'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedLumioLibraryRouteImport } from './routes/_authenticated/lumio-library'
 import { Route as AuthenticatedLumioRouteImport } from './routes/_authenticated/lumio'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedExamsRouteImport } from './routes/_authenticated/exams'
@@ -80,6 +81,12 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLumioLibraryRoute =
+  AuthenticatedLumioLibraryRouteImport.update({
+    id: '/lumio-library',
+    path: '/lumio-library',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLumioRoute = AuthenticatedLumioRouteImport.update({
   id: '/lumio',
   path: '/lumio',
@@ -117,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/exams': typeof AuthenticatedExamsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/lumio': typeof AuthenticatedLumioRoute
+  '/lumio-library': typeof AuthenticatedLumioLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/study': typeof AuthenticatedStudyRoute
@@ -134,6 +142,7 @@ export interface FileRoutesByTo {
   '/exams': typeof AuthenticatedExamsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/lumio': typeof AuthenticatedLumioRoute
+  '/lumio-library': typeof AuthenticatedLumioLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/study': typeof AuthenticatedStudyRoute
@@ -153,6 +162,7 @@ export interface FileRoutesById {
   '/_authenticated/exams': typeof AuthenticatedExamsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/lumio': typeof AuthenticatedLumioRoute
+  '/_authenticated/lumio-library': typeof AuthenticatedLumioLibraryRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/study': typeof AuthenticatedStudyRoute
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/exams'
     | '/library'
     | '/lumio'
+    | '/lumio-library'
     | '/profile'
     | '/settings'
     | '/study'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/exams'
     | '/library'
     | '/lumio'
+    | '/lumio-library'
     | '/profile'
     | '/settings'
     | '/study'
@@ -207,6 +219,7 @@ export interface FileRouteTypes {
     | '/_authenticated/exams'
     | '/_authenticated/library'
     | '/_authenticated/lumio'
+    | '/_authenticated/lumio-library'
     | '/_authenticated/profile'
     | '/_authenticated/settings'
     | '/_authenticated/study'
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/lumio-library': {
+      id: '/_authenticated/lumio-library'
+      path: '/lumio-library'
+      fullPath: '/lumio-library'
+      preLoaderRoute: typeof AuthenticatedLumioLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lumio': {
       id: '/_authenticated/lumio'
       path: '/lumio'
@@ -347,6 +367,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedExamsRoute: typeof AuthenticatedExamsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedLumioRoute: typeof AuthenticatedLumioRoute
+  AuthenticatedLumioLibraryRoute: typeof AuthenticatedLumioLibraryRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudyRoute: typeof AuthenticatedStudyRoute
@@ -358,6 +379,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedExamsRoute: AuthenticatedExamsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedLumioRoute: AuthenticatedLumioRoute,
+  AuthenticatedLumioLibraryRoute: AuthenticatedLumioLibraryRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudyRoute: AuthenticatedStudyRoute,
@@ -380,3 +402,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
