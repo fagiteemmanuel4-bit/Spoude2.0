@@ -3,7 +3,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc, where } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { deleteObject, ref } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import {
@@ -93,7 +102,10 @@ function Library() {
         orderBy("created_at", "desc"),
       );
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Material[];
+      return snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Record<string, unknown>),
+      })) as Material[];
     },
   });
 

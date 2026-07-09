@@ -45,7 +45,10 @@ function ExamsPage() {
         orderBy("created_at", "desc"),
       );
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as ExamRow[];
+      return snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Record<string, unknown>),
+      })) as ExamRow[];
     },
   });
 

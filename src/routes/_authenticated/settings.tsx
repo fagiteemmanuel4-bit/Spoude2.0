@@ -220,7 +220,10 @@ function Settings() {
     try {
       const user = await getCurrentFirebaseUser();
       if (!user) throw new Error("Not signed in");
-      await saveProfile(user.uid, { display_name: name.trim() || null, updated_at: new Date().toISOString() });
+      await saveProfile(user.uid, {
+        display_name: name.trim() || null,
+        updated_at: new Date().toISOString(),
+      });
       setSavingName(false);
       toast.success("Profile updated");
     } catch (error) {
@@ -232,7 +235,11 @@ function Settings() {
   const startEnroll = async () => {
     setEnrolling(true);
     try {
-      setEnrollData({ factorId: "", qr: "", secret: "2FA setup is not available in this build yet." });
+      setEnrollData({
+        factorId: "",
+        qr: "",
+        secret: "2FA setup is not available in this build yet.",
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not start enrollment");
     } finally {

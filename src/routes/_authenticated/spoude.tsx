@@ -134,7 +134,11 @@ function HomePage() {
     queryFn: async () => {
       const user = await getCurrentFirebaseUser();
       if (!user) return { counts: { notes: 0, homework: 0, exam: 0 }, recent: [] };
-      const q = query(collection(db, "materials"), where("user_id", "==", user.uid), orderBy("created_at", "desc"));
+      const q = query(
+        collection(db, "materials"),
+        where("user_id", "==", user.uid),
+        orderBy("created_at", "desc"),
+      );
       const snap = await getDocs(q);
       const data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
       const counts = { notes: 0, homework: 0, exam: 0 };
@@ -151,7 +155,11 @@ function HomePage() {
     queryFn: async () => {
       const user = await getCurrentFirebaseUser();
       if (!user) return { counts: { study: 0, test: 0, exam: 0 }, recent: [] };
-      const q = query(collection(db, "study_sets"), where("user_id", "==", user.uid), orderBy("created_at", "desc"));
+      const q = query(
+        collection(db, "study_sets"),
+        where("user_id", "==", user.uid),
+        orderBy("created_at", "desc"),
+      );
       const snap = await getDocs(q);
       const data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
       const counts = { study: 0, test: 0, exam: 0 };
@@ -168,7 +176,11 @@ function HomePage() {
     queryFn: async () => {
       const user = await getCurrentFirebaseUser();
       if (!user) return [];
-      const q = query(collection(db, "attempts"), where("user_id", "==", user.uid), orderBy("completed_at", "desc"));
+      const q = query(
+        collection(db, "attempts"),
+        where("user_id", "==", user.uid),
+        orderBy("completed_at", "desc"),
+      );
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({
         id: d.id,
@@ -192,7 +204,8 @@ function HomePage() {
             const total = typeof b.total === "number" ? b.total : 0;
             const score = typeof b.score === "number" ? b.score : 0;
             return a + (total > 0 ? score / total : 0);
-          }, 0) / attempts.length) *
+          }, 0) /
+            attempts.length) *
             100,
         )
       : null;
