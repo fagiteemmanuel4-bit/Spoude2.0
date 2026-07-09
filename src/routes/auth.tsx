@@ -1,26 +1,26 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
-import { LumioMark } from "@/components/Logo";
-import { toast } from "sonner";
+import { auth, db, googleProvider } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 import {
-  Loader2,
-  Mail,
-  Lock,
-  ShieldCheck,
-  ArrowRight,
-  User as UserIcon,
-} from "lucide-react";
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInWithPopup,
+} from "firebase/auth";
+import { SpoudeMark } from "@/components/Logo";
+import { toast } from "sonner";
+import { Loader2, Mail, Lock, ShieldCheck, ArrowRight, User as UserIcon, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Lumio" },
-      { name: "description", content: "Sign in or create your Lumio account." },
+      { title: "Sign in — Spoude" },
+      { name: "description", content: "Sign in or create your Spoude account." },
     ],
   }),
   validateSearch: searchSchema,
@@ -44,10 +44,8 @@ const signinSchema = z.object({
   password: z.string().min(1, "Required").max(72),
 });
 
-type Step = "credentials" | "mfa";
+type Step = "credentials";
 
-// Rotating expressive lines shown over the background image on desktop.
-// Add / edit / reorder freely — they cycle automatically.
 const EXPRESSIVE_LINES = [
   "Every late night with your notes counts for something.",
   "One page, one problem set, one step closer.",
@@ -82,14 +80,15 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">(search.mode ?? "signin");
   const [step, setStep] = useState<Step>("credentials");
   const [loading, setLoading] = useState(false);
+  const [isUniversity, setIsUniversity] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", name: "" });
-  const [mfa, setMfa] = useState({ factorId: "", code: "" });
   const { line, visible } = useRotatingLine(EXPRESSIVE_LINES);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/lumio", replace: true });
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) navigate({ to: "/spoude", replace: true });
     });
+    return () => unsubscribe();
   }, [navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -102,46 +101,43 @@ function AuthPage() {
           toast.error(parsed.error.issues[0].message);
           return;
         }
-        const { data, error } = await supabase.auth.signUp({
-          email: parsed.data.email,
-          password: parsed.data.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/lumio`,
-            data: { display_name: parsed.data.name },
-          },
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          parsed.data.email,
+          parsed.data.password,
+        );
+        await updateProfile(userCredential.user, {
+          displayName: parsed.data.name,
         });
-        if (error) throw error;
-        if (!data.session) {
-          // Email confirmation is required — there's no active session yet.
-          toast.success("Account created! Check your email to confirm before signing in.");
-          setMode("signin");
-          return;
+
+        // Set role & data in profiles
+        await setDoc(doc(db, "profiles", userCredential.user.uid), {
+          display_name: parsed.data.name,
+          bio: isUniversity ? "Official University Library Administrator" : "",
+          role: isUniversity ? "university" : "student",
+          current_streak: 0,
+          longest_streak: 0,
+          honor_score: 0,
+          plan: isUniversity ? "pro" : "free",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+        toast.success("Account created. Welcome to Spoude!");
+        if (isUniversity) {
+          navigate({ to: "/university-dashboard", replace: true });
+        } else {
+          navigate({ to: "/spoude", replace: true });
         }
-        toast.success("Account created. Welcome to Lumio!");
-        navigate({ to: "/lumio", replace: true });
       } else {
         const parsed = signinSchema.safeParse(form);
         if (!parsed.success) {
           toast.error(parsed.error.issues[0].message);
           return;
         }
-        const { error } = await supabase.auth.signInWithPassword({
-          email: parsed.data.email,
-          password: parsed.data.password,
-        });
-        if (error) throw error;
-        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        if (aal?.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel) {
-          const { data: factors } = await supabase.auth.mfa.listFactors();
-          const totp = factors?.totp?.[0];
-          if (totp) {
-            setMfa({ factorId: totp.id, code: "" });
-            setStep("mfa");
-            return;
-          }
-        }
+        await signInWithEmailAndPassword(auth, parsed.data.email, parsed.data.password);
         toast.success("Welcome back");
-        navigate({ to: "/lumio", replace: true });
+        navigate({ to: "/spoude", replace: true });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Authentication failed");
@@ -150,45 +146,17 @@ function AuthPage() {
     }
   };
 
-  const verifyMfa = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (mfa.code.length !== 6) {
-      toast.error("Enter the 6-digit code");
-      return;
-    }
+  const google = async () => {
     setLoading(true);
     try {
-      const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({
-        factorId: mfa.factorId,
-      });
-      if (cErr) throw cErr;
-      const { error } = await supabase.auth.mfa.verify({
-        factorId: mfa.factorId,
-        challengeId: challenge.id,
-        code: mfa.code,
-      });
-      if (error) throw error;
-      toast.success("Verified");
-      navigate({ to: "/lumio", replace: true });
+      await signInWithPopup(auth, googleProvider);
+      toast.success("Welcome back");
+      navigate({ to: "/spoude", replace: true });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Invalid code");
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
     } finally {
       setLoading(false);
     }
-  };
-
-  const google = async () => {
-    setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/auth",
-    });
-    if (result.error) {
-      toast.error(result.error.message ?? "Google sign-in failed");
-      setLoading(false);
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/lumio", replace: true });
   };
 
   return (
@@ -219,9 +187,9 @@ function AuthPage() {
         {/* Logo + wordmark, top-left */}
         <div className="relative z-10 flex items-center gap-2.5 px-10 pt-10">
           <div className="h-10 w-10 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/15">
-            <LumioMark size={24} />
+            <SpoudeMark size={24} />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">Lumio</span>
+          <span className="text-xl font-bold tracking-tight text-white">Spoude</span>
         </div>
 
         {/* Rotating expressive line, bottom-left */}
@@ -249,21 +217,30 @@ function AuthPage() {
       <div className="relative flex flex-1 flex-col min-h-screen lg:min-h-0">
         {/* Mobile-only brand row (left panel is hidden below lg) */}
         <div className="flex lg:hidden items-center gap-2 px-6 pt-6">
-          <div className="h-9 w-9 rounded-2xl border border-border flex items-center justify-center" style={{ background: "var(--popover)" }}>
-            <LumioMark size={22} />
+          <div
+            className="h-9 w-9 rounded-2xl border border-border flex items-center justify-center"
+            style={{ background: "var(--popover)" }}
+          >
+            <SpoudeMark size={22} />
           </div>
-          <span className="text-lg font-bold tracking-tight">Lumio</span>
+          <span className="text-lg font-bold tracking-tight">Spoude</span>
         </div>
 
         <main className="flex-1 flex items-center justify-center px-4 py-10 lg:py-0">
           <div className="w-full max-w-sm">
             <div className="mb-8 animate-fade-up">
               <h1 className="text-[26px] font-bold tracking-tight leading-tight">
-                {mode === "signup" ? "Create your Lumio account" : "Welcome back to Lumio"}
+                {mode === "signup" ? (
+                  isUniversity ? "Create University Account" : "Create your Spoude account"
+                ) : (
+                  "Welcome back to Spoude"
+                )}
               </h1>
               <p className="mt-1.5 text-[13px] text-muted-foreground max-w-xs">
                 {mode === "signup"
-                  ? "One quiet space for every note, homework and past paper."
+                  ? isUniversitySignUp()
+                    ? "Upload high-quality academic files to Spoude's global bookshelf."
+                    : "One quiet space for every note, homework and past paper."
                   : "Sign in to continue where you left off."}
               </p>
             </div>
@@ -273,7 +250,7 @@ function AuthPage() {
               className="rounded-3xl border border-border shadow-elev-3 p-6 sm:p-7 animate-fade-up"
               style={{ background: "var(--popover)", animationDelay: "60ms" }}
             >
-              {step === "credentials" ? (
+              {step === "credentials" && (
                 <>
                   <button
                     type="button"
@@ -292,7 +269,7 @@ function AuthPage() {
 
                   <form onSubmit={submit} className="space-y-3">
                     {mode === "signup" && (
-                      <Field label="Name" icon={<UserIcon className="h-4 w-4" />}>
+                      <Field label={isUniversity ? "University Name" : "Name"} icon={<UserIcon className="h-4 w-4" />}>
                         <input
                           type="text"
                           autoComplete="name"
@@ -301,11 +278,11 @@ function AuthPage() {
                           value={form.name}
                           onChange={(e) => setForm({ ...form, name: e.target.value })}
                           className="w-full bg-transparent outline-none text-sm"
-                          placeholder="Alex Rivera"
+                          placeholder={isUniversity ? "Oxford University" : "Alex Rivera"}
                         />
                       </Field>
                     )}
-                    <Field label="Email" icon={<Mail className="h-4 w-4" />}>
+                    <Field label={isUniversity ? "Administrative Email" : "Email"} icon={<Mail className="h-4 w-4" />}>
                       <input
                         type="email"
                         autoComplete="email"
@@ -314,7 +291,7 @@ function AuthPage() {
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         className="w-full bg-transparent outline-none text-sm"
-                        placeholder="you@school.edu"
+                        placeholder={isUniversity ? "admin@ox.ac.uk" : "you@school.edu"}
                       />
                     </Field>
                     <Field label="Password" icon={<Lock className="h-4 w-4" />}>
@@ -326,7 +303,9 @@ function AuthPage() {
                         value={form.password}
                         onChange={(e) => setForm({ ...form, password: e.target.value })}
                         className="w-full bg-transparent outline-none text-sm"
-                        placeholder={mode === "signup" ? "8+ chars, mixed case, number" : "••••••••"}
+                        placeholder={
+                          mode === "signup" ? "8+ chars, mixed case, number" : "••••••••"
+                        }
                       />
                     </Field>
 
@@ -345,50 +324,46 @@ function AuthPage() {
                   </form>
 
                   <p className="mt-5 text-center text-[13px] text-muted-foreground">
-                    {mode === "signup" ? "Already have an account?" : "New to Lumio?"}{" "}
+                    {mode === "signup" ? "Already have an account?" : "New to Spoude?"}{" "}
                     <button
-                      onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-                      className="text-foreground font-semibold hover:text-primary transition-colors"
+                      onClick={() => {
+                        setMode(mode === "signup" ? "signin" : "signup");
+                        setIsUniversity(false);
+                      }}
+                      className="text-foreground font-semibold hover:text-primary transition-colors cursor-pointer"
                     >
                       {mode === "signup" ? "Sign in" : "Create one"}
                     </button>
                   </p>
-                </>
-              ) : (
-                <>
-                  <div className="h-10 w-10 rounded-full bg-primary-soft flex items-center justify-center">
-                    <ShieldCheck className="h-5 w-5 text-primary" />
+
+                  {/* University Accounts Option */}
+                  <div className="mt-6 pt-4 border-t border-border/40 text-center">
+                    <div className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("signup");
+                          setIsUniversity(true);
+                          setForm({ name: "", email: "", password: "" });
+                        }}
+                        className="font-semibold text-primary hover:underline cursor-pointer"
+                      >
+                        Create an account for your university
+                      </button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="p-0.5 rounded-full hover:bg-secondary cursor-help">
+                              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[220px] p-2 text-xs">
+                            This option is for universities that want to officially upload verified study sheets and textbook guides to the public library.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   </div>
-                  <h2 className="mt-4 text-xl font-bold tracking-tight">Two-factor verification</h2>
-                  <p className="mt-1.5 text-sm text-muted-foreground">
-                    Enter the 6-digit code from your authenticator.
-                  </p>
-                  <form onSubmit={verifyMfa} className="mt-5 space-y-3">
-                    <input
-                      autoFocus
-                      inputMode="numeric"
-                      pattern="\d{6}"
-                      maxLength={6}
-                      value={mfa.code}
-                      onChange={(e) =>
-                        setMfa({ ...mfa, code: e.target.value.replace(/\D/g, "").slice(0, 6) })
-                      }
-                      className="w-full text-center text-2xl font-mono tracking-[0.5em] bg-secondary rounded-lg py-3 outline-none focus:ring-2 focus:ring-ring"
-                      placeholder="000000"
-                    />
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="ripple w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 text-[13px] font-semibold shadow-elev-1 hover:shadow-glow transition-all disabled:opacity-60"
-                    >
-                      {loading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <ShieldCheck className="h-4 w-4" />
-                      )}
-                      Verify
-                    </button>
-                  </form>
                 </>
               )}
             </div>
@@ -408,6 +383,10 @@ function AuthPage() {
       </div>
     </div>
   );
+
+  function isUniversitySignUp(): boolean {
+    return mode === "signup" && isUniversity;
+  }
 }
 
 function Field({

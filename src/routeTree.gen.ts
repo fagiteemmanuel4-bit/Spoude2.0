@@ -18,10 +18,10 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTeachRouteImport } from './routes/api/teach'
 import { Route as AuthenticatedStudyRouteImport } from './routes/_authenticated/study'
+import { Route as AuthenticatedSpoudeLibraryRouteImport } from './routes/_authenticated/spoude-library'
+import { Route as AuthenticatedSpoudeRouteImport } from './routes/_authenticated/spoude'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
-import { Route as AuthenticatedLumioLibraryRouteImport } from './routes/_authenticated/lumio-library'
-import { Route as AuthenticatedLumioRouteImport } from './routes/_authenticated/lumio'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedExamsRouteImport } from './routes/_authenticated/exams'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
@@ -71,6 +71,17 @@ const AuthenticatedStudyRoute = AuthenticatedStudyRouteImport.update({
   path: '/study',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSpoudeLibraryRoute =
+  AuthenticatedSpoudeLibraryRouteImport.update({
+    id: '/spoude-library',
+    path: '/spoude-library',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSpoudeRoute = AuthenticatedSpoudeRouteImport.update({
+  id: '/spoude',
+  path: '/spoude',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -79,17 +90,6 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedLumioLibraryRoute =
-  AuthenticatedLumioLibraryRouteImport.update({
-    id: '/lumio-library',
-    path: '/lumio-library',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedLumioRoute = AuthenticatedLumioRouteImport.update({
-  id: '/lumio',
-  path: '/lumio',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
@@ -123,10 +123,10 @@ export interface FileRoutesByFullPath {
   '/billing': typeof AuthenticatedBillingRoute
   '/exams': typeof AuthenticatedExamsRoute
   '/library': typeof AuthenticatedLibraryRoute
-  '/lumio': typeof AuthenticatedLumioRoute
-  '/lumio-library': typeof AuthenticatedLumioLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/spoude': typeof AuthenticatedSpoudeRoute
+  '/spoude-library': typeof AuthenticatedSpoudeLibraryRoute
   '/study': typeof AuthenticatedStudyRoute
   '/api/teach': typeof ApiTeachRoute
   '/sets/$id': typeof AuthenticatedSetsIdRoute
@@ -141,10 +141,10 @@ export interface FileRoutesByTo {
   '/billing': typeof AuthenticatedBillingRoute
   '/exams': typeof AuthenticatedExamsRoute
   '/library': typeof AuthenticatedLibraryRoute
-  '/lumio': typeof AuthenticatedLumioRoute
-  '/lumio-library': typeof AuthenticatedLumioLibraryRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/spoude': typeof AuthenticatedSpoudeRoute
+  '/spoude-library': typeof AuthenticatedSpoudeLibraryRoute
   '/study': typeof AuthenticatedStudyRoute
   '/api/teach': typeof ApiTeachRoute
   '/sets/$id': typeof AuthenticatedSetsIdRoute
@@ -161,10 +161,10 @@ export interface FileRoutesById {
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/exams': typeof AuthenticatedExamsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
-  '/_authenticated/lumio': typeof AuthenticatedLumioRoute
-  '/_authenticated/lumio-library': typeof AuthenticatedLumioLibraryRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/spoude': typeof AuthenticatedSpoudeRoute
+  '/_authenticated/spoude-library': typeof AuthenticatedSpoudeLibraryRoute
   '/_authenticated/study': typeof AuthenticatedStudyRoute
   '/api/teach': typeof ApiTeachRoute
   '/_authenticated/sets/$id': typeof AuthenticatedSetsIdRoute
@@ -181,10 +181,10 @@ export interface FileRouteTypes {
     | '/billing'
     | '/exams'
     | '/library'
-    | '/lumio'
-    | '/lumio-library'
     | '/profile'
     | '/settings'
+    | '/spoude'
+    | '/spoude-library'
     | '/study'
     | '/api/teach'
     | '/sets/$id'
@@ -199,10 +199,10 @@ export interface FileRouteTypes {
     | '/billing'
     | '/exams'
     | '/library'
-    | '/lumio'
-    | '/lumio-library'
     | '/profile'
     | '/settings'
+    | '/spoude'
+    | '/spoude-library'
     | '/study'
     | '/api/teach'
     | '/sets/$id'
@@ -218,10 +218,10 @@ export interface FileRouteTypes {
     | '/_authenticated/billing'
     | '/_authenticated/exams'
     | '/_authenticated/library'
-    | '/_authenticated/lumio'
-    | '/_authenticated/lumio-library'
     | '/_authenticated/profile'
     | '/_authenticated/settings'
+    | '/_authenticated/spoude'
+    | '/_authenticated/spoude-library'
     | '/_authenticated/study'
     | '/api/teach'
     | '/_authenticated/sets/$id'
@@ -303,6 +303,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/spoude-library': {
+      id: '/_authenticated/spoude-library'
+      path: '/spoude-library'
+      fullPath: '/spoude-library'
+      preLoaderRoute: typeof AuthenticatedSpoudeLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/spoude': {
+      id: '/_authenticated/spoude'
+      path: '/spoude'
+      fullPath: '/spoude'
+      preLoaderRoute: typeof AuthenticatedSpoudeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -315,20 +329,6 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/lumio-library': {
-      id: '/_authenticated/lumio-library'
-      path: '/lumio-library'
-      fullPath: '/lumio-library'
-      preLoaderRoute: typeof AuthenticatedLumioLibraryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/lumio': {
-      id: '/_authenticated/lumio'
-      path: '/lumio'
-      fullPath: '/lumio'
-      preLoaderRoute: typeof AuthenticatedLumioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/library': {
@@ -366,10 +366,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedExamsRoute: typeof AuthenticatedExamsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
-  AuthenticatedLumioRoute: typeof AuthenticatedLumioRoute
-  AuthenticatedLumioLibraryRoute: typeof AuthenticatedLumioLibraryRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSpoudeRoute: typeof AuthenticatedSpoudeRoute
+  AuthenticatedSpoudeLibraryRoute: typeof AuthenticatedSpoudeLibraryRoute
   AuthenticatedStudyRoute: typeof AuthenticatedStudyRoute
   AuthenticatedSetsIdRoute: typeof AuthenticatedSetsIdRoute
 }
@@ -378,10 +378,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedExamsRoute: AuthenticatedExamsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
-  AuthenticatedLumioRoute: AuthenticatedLumioRoute,
-  AuthenticatedLumioLibraryRoute: AuthenticatedLumioLibraryRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSpoudeRoute: AuthenticatedSpoudeRoute,
+  AuthenticatedSpoudeLibraryRoute: AuthenticatedSpoudeLibraryRoute,
   AuthenticatedStudyRoute: AuthenticatedStudyRoute,
   AuthenticatedSetsIdRoute: AuthenticatedSetsIdRoute,
 }

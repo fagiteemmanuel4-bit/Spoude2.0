@@ -25,7 +25,7 @@ import { getUsage } from "@/lib/exam.functions";
 import { planFor } from "@/lib/plans";
 import { MetricSkeleton, ActivityRowSkeleton, EmptyState, Skel } from "@/components/Skeletons";
 
-export const Route = createFileRoute("/_authenticated/lumio")({
+export const Route = createFileRoute("/_authenticated/spoude")({
   head: () => ({ meta: [{ title: "Home — Lumio" }] }),
   component: HomePage,
 });
