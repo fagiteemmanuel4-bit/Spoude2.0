@@ -16,7 +16,6 @@ import {
   Moon,
   Library,
   Users,
-  HelpCircle,
 } from "lucide-react";
 import { SpoudeMark, SpoudeWordmark } from "@/components/Logo";
 import { auth } from "@/lib/firebase";
@@ -40,7 +39,6 @@ const TRAY_NAV: NavItem[] = [
   { to: "/study", label: "Study", icon: BookOpenCheck, group: "learn" },
   { to: "/exams", label: "Take an exam", icon: GraduationCap, group: "learn" },
   { to: "#tutors", label: "Hire a Tutor", icon: Users, group: "learn", soon: true },
-  { to: "/help", label: "Help & Docs", icon: HelpCircle, group: "account" },
   { to: "/billing", label: "Billing", icon: CreditCard, group: "account" },
   { to: "/settings", label: "Settings", icon: Settings, group: "account" },
 ];
