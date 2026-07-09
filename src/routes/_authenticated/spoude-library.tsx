@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export const Route = createFileRoute("/_authenticated/lumio-library")({
+export const Route = createFileRoute("/_authenticated/spoude-library")({
   head: () => ({ meta: [{ title: "Lumio Library — Discover & Share" }] }),
   component: LumioLibrary,
 });
