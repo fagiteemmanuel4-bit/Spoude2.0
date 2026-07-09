@@ -38,10 +38,7 @@ export const generateExamFromMaterial = createServerFn({ method: "POST" })
       );
     }
 
-    const usageSnap = await adminDb
-      .collection("ai_usage")
-      .where("user_id", "==", userId)
-      .get();
+    const usageSnap = await adminDb.collection("ai_usage").where("user_id", "==", userId).get();
     const used = usageSnap.docs.filter((doc) => {
       const createdAt = doc.data().created_at as string | undefined;
       return createdAt && createdAt >= startOfMonthISO();

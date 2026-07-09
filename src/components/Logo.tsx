@@ -45,4 +45,3 @@ export function SpoudeWordmark({ to = "/" }: { to?: string }) {
     </Link>
   );
 }
-

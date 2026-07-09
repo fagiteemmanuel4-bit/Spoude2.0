@@ -133,8 +133,10 @@ export async function getUserAttempts(uid: string): Promise<FirebaseAttempt[]> {
     user_id: String((docSnap.data().user_id as string | undefined) ?? ""),
     score: typeof docSnap.data().score === "number" ? docSnap.data().score : undefined,
     total: typeof docSnap.data().total === "number" ? docSnap.data().total : undefined,
-    completed_at: typeof docSnap.data().completed_at === "string" ? docSnap.data().completed_at : undefined,
-    created_at: typeof docSnap.data().created_at === "string" ? docSnap.data().created_at : undefined,
+    completed_at:
+      typeof docSnap.data().completed_at === "string" ? docSnap.data().completed_at : undefined,
+    created_at:
+      typeof docSnap.data().created_at === "string" ? docSnap.data().created_at : undefined,
   }));
 }
 

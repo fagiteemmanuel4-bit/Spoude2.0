@@ -34,7 +34,8 @@ function UniversityDashboard() {
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">University dashboard</h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                Curate a shared library for your students, track uploads, and keep your academic resources organized in one place.
+                Curate a shared library for your students, track uploads, and keep your academic
+                resources organized in one place.
               </p>
             </div>
           </div>
@@ -71,9 +72,12 @@ function UniversityDashboard() {
             <div className="inline-flex items-center gap-2 rounded-full bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 text-primary" /> New for institutions
             </div>
-            <h2 className="text-2xl font-semibold tracking-tight">Launch your next academic collection</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Launch your next academic collection
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Your university space is ready for high-quality content, organized by course and department.
+              Your university space is ready for high-quality content, organized by course and
+              department.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

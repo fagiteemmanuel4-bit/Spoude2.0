@@ -62,8 +62,12 @@ function ProfilePage() {
     queryFn: async () => {
       const user = await getCurrentFirebaseUser();
       if (!user) return null;
-      const profileSnap = await import("firebase/firestore").then(({ doc, getDoc }) => getDoc(doc(db, "profiles", user.uid)));
-      const profile = profileSnap.exists() ? ({ id: profileSnap.id, ...(profileSnap.data() as Record<string, unknown>) }) : null;
+      const profileSnap = await import("firebase/firestore").then(({ doc, getDoc }) =>
+        getDoc(doc(db, "profiles", user.uid)),
+      );
+      const profile = profileSnap.exists()
+        ? { id: profileSnap.id, ...(profileSnap.data() as Record<string, unknown>) }
+        : null;
       return { user, profile: profile as Profile | null };
     },
   });
@@ -474,7 +478,10 @@ function SecurityPanel({ email }: { email: string }) {
       if (!user) return [];
       const q = query(collection(db, "account_events"), where("user_id", "==", user.uid));
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) })) as Array<{ id: string; event_type: string; detail: string | null; created_at: string }>;
+      return snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Record<string, unknown>),
+      })) as Array<{ id: string; event_type: string; detail: string | null; created_at: string }>;
     },
   });
 

@@ -326,8 +326,8 @@ function SpoudeLibrary() {
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               By uploading to the Spoude Library, you agree to our Content Guidelines. You must own
-              the copyright to all shared materials. Spoude does not tolerate plagiarism or copyright
-              infringement.
+              the copyright to all shared materials. Spoude does not tolerate plagiarism or
+              copyright infringement.
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <Link to="/privacy" className="text-xs font-bold text-primary hover:underline">
