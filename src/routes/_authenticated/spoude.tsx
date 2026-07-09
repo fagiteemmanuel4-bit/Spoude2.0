@@ -123,6 +123,20 @@ const TYPE_META = {
   exam: { label: "Past exams", icon: GraduationCap },
 } as const;
 
+type RecentMaterial = {
+  id: string;
+  type?: "notes" | "homework" | "exam";
+  title?: string;
+  created_at?: string;
+};
+
+type RecentStudySet = {
+  id: string;
+  kind?: "study" | "test" | "exam";
+  title?: string;
+  created_at?: string;
+};
+
 function HomePage() {
   const { data: user } = useQuery({
     queryKey: ["me"],
@@ -136,10 +150,18 @@ function HomePage() {
       if (!user) return { counts: { notes: 0, homework: 0, exam: 0 }, recent: [] };
       const q = query(collection(db, "materials"), where("user_id", "==", user.uid), orderBy("created_at", "desc"));
       const snap = await getDocs(q);
-      const data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+      const data: RecentMaterial[] = snap.docs.map((d) => {
+        const payload = d.data() as Partial<RecentMaterial>;
+        return {
+          id: d.id,
+          type: payload.type ?? "notes",
+          title: typeof payload.title === "string" ? payload.title : undefined,
+          created_at: typeof payload.created_at === "string" ? payload.created_at : undefined,
+        };
+      });
       const counts = { notes: 0, homework: 0, exam: 0 };
       data.forEach((m) => {
-        const type = (m.type as keyof typeof counts | undefined) ?? "notes";
+        const type = m.type ?? "notes";
         if (type in counts) counts[type] += 1;
       });
       return { counts, recent: data.slice(0, 5) };
@@ -153,10 +175,18 @@ function HomePage() {
       if (!user) return { counts: { study: 0, test: 0, exam: 0 }, recent: [] };
       const q = query(collection(db, "study_sets"), where("user_id", "==", user.uid), orderBy("created_at", "desc"));
       const snap = await getDocs(q);
-      const data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+      const data: RecentStudySet[] = snap.docs.map((d) => {
+        const payload = d.data() as Partial<RecentStudySet>;
+        return {
+          id: d.id,
+          kind: payload.kind ?? "study",
+          title: typeof payload.title === "string" ? payload.title : undefined,
+          created_at: typeof payload.created_at === "string" ? payload.created_at : undefined,
+        };
+      });
       const counts = { study: 0, test: 0, exam: 0 };
       data.forEach((s) => {
-        const kind = (s.kind as keyof typeof counts | undefined) ?? "study";
+        const kind = s.kind ?? "study";
         if (kind in counts) counts[kind] += 1;
       });
       return { counts, recent: data.slice(0, 4) };
