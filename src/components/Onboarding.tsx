@@ -8,17 +8,11 @@ const KEY = "lumio-onboarding-v1";
 
 export function shouldRunOnboarding(): boolean {
   if (typeof window === "undefined") return false;
-  try {
-    return localStorage.getItem(KEY) !== "done";
-  } catch {
-    return true;
-  }
+  try { return localStorage.getItem(KEY) !== "done"; } catch { return true; }
 }
 
 export function resetOnboarding() {
-  try {
-    localStorage.removeItem(KEY);
-  } catch {}
+  try { localStorage.removeItem(KEY); } catch {}
   window.dispatchEvent(new Event("lumio:onboarding:replay"));
 }
 
@@ -34,9 +28,7 @@ export function Onboarding() {
   }, []);
 
   const finish = () => {
-    try {
-      localStorage.setItem(KEY, "done");
-    } catch {}
+    try { localStorage.setItem(KEY, "done"); } catch {}
     setOpen(false);
     setShowTips(true);
     // auto-dismiss tips after 12s so we don't nag
@@ -82,43 +74,20 @@ function WelcomeModal({ onDone, onSkip }: { onDone: () => void; onSkip: () => vo
             </div>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Welcome to
-            </p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Welcome to</p>
             <h2 className="text-lg font-semibold tracking-tight">Lumio</h2>
           </div>
         </div>
 
         <p className="text-[13px] text-muted-foreground leading-relaxed">
-          Your study, illuminated. Here's what to know in 20 seconds — three things you'll use every
-          day.
+          Your study, illuminated. Here's what to know in 20 seconds — three things you'll use every day.
         </p>
 
         <ul className="mt-5 space-y-3">
-          <Row
-            icon={Home}
-            tone="primary"
-            title="Home hub"
-            desc="Progress, jump-in tiles, and recent activity — all in one place."
-          />
-          <Row
-            icon={Plus}
-            tone="violet"
-            title="Bottom nav +"
-            desc="Tap the glowing plus to reach Library, Study, Exams and Billing."
-          />
-          <Row
-            icon={Moon}
-            tone="gold"
-            title="Light or dark"
-            desc="Toggle any time from the top bar. Your choice is remembered."
-          />
-          <Row
-            icon={User}
-            tone="emerald"
-            title="Your profile"
-            desc="Honor score, streak, credits and account controls live under Profile."
-          />
+          <Row icon={Home} tone="primary" title="Home hub" desc="Progress, jump-in tiles, and recent activity — all in one place." />
+          <Row icon={Plus} tone="violet" title="Bottom nav +" desc="Tap the glowing plus to reach Library, Study, Exams and Billing." />
+          <Row icon={Moon} tone="gold" title="Light or dark" desc="Toggle any time from the top bar. Your choice is remembered." />
+          <Row icon={User} tone="emerald" title="Your profile" desc="Honor score, streak, credits and account controls live under Profile." />
         </ul>
 
         <div className="mt-6 flex items-center justify-between gap-3">
@@ -152,15 +121,11 @@ function WelcomeModal({ onDone, onSkip }: { onDone: () => void; onSkip: () => vo
 }
 
 function Row({
-  icon: Icon,
-  tone,
-  title,
-  desc,
+  icon: Icon, tone, title, desc,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   tone: "primary" | "gold" | "violet" | "emerald";
-  title: string;
-  desc: string;
+  title: string; desc: string;
 }) {
   const toneCls: Record<string, string> = {
     primary: "bg-primary/12 text-primary",
@@ -170,9 +135,7 @@ function Row({
   };
   return (
     <li className="flex items-start gap-3">
-      <div
-        className={`h-9 w-9 rounded-2xl flex items-center justify-center shrink-0 ${toneCls[tone]}`}
-      >
+      <div className={`h-9 w-9 rounded-2xl flex items-center justify-center shrink-0 ${toneCls[tone]}`}>
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">

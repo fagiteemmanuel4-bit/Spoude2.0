@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { auth } from "@/lib/firebase";
+import { supabase } from "@/integrations/supabase/client";
 import { ThemeProvider, themeInitScript } from "@/lib/theme";
 
 function NotFoundComponent() {
@@ -80,32 +80,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", media: "(prefers-color-scheme: light)", content: "#3646d9" },
-      { name: "theme-color", media: "(prefers-color-scheme: dark)", content: "#1a1b1e" },
+      { name: "theme-color", content: "#3646d9" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "Spoude" },
+      { name: "apple-mobile-web-app-title", content: "Lumio" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { title: "Spoude — Your study, illuminated" },
-      {
-        name: "description",
-        content:
-          "Spoude is the calm, organized home for your class notes, homework and past exams. Built for personal academic growth.",
-      },
-      { name: "author", content: "Spoude" },
-      { property: "og:title", content: "Spoude — Your study, illuminated" },
-      {
-        property: "og:description",
-        content:
-          "Spoude is the calm, organized home for your class notes, homework and past exams. Built for personal academic growth.",
-      },
+      { title: "Lumio — Your study, illuminated" },
+      { name: "description", content: "Lumio is the calm, organized home for your class notes, homework and past exams. Built for personal academic growth." },
+      { name: "author", content: "Lumio" },
+      { property: "og:title", content: "Lumio — Your study, illuminated" },
+      { property: "og:description", content: "Lumio is the calm, organized home for your class notes, homework and past exams. Built for personal academic growth." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Spoude — Your study, illuminated" },
-      {
-        name: "twitter:description",
-        content:
-          "Spoude is the calm, organized home for your class notes, homework and past exams. Built for personal academic growth.",
-      },
+      { name: "twitter:title", content: "Lumio — Your study, illuminated" },
+      { name: "twitter:description", content: "Lumio is the calm, organized home for your class notes, homework and past exams. Built for personal academic growth." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/62e830e6-83ed-4ddb-a57b-cb05751e503d/id-preview-3c192c3d--08555808-a10e-457e-8e41-b427242f611c.lovable.app-1782773736777.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/62e830e6-83ed-4ddb-a57b-cb05751e503d/id-preview-3c192c3d--08555808-a10e-457e-8e41-b427242f611c.lovable.app-1782773736777.png" },
     ],
     links: [
       {
@@ -114,12 +103,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
-      },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
@@ -149,11 +135,12 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
-      queryClient.invalidateQueries();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
-    return () => unsubscribe();
+    return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
 
   return (

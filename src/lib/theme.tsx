@@ -28,9 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     apply(theme);
-    try {
-      localStorage.setItem(KEY, theme);
-    } catch {}
+    try { localStorage.setItem(KEY, theme); } catch {}
   }, [theme]);
 
   const setTheme = (t: Theme) => setThemeState(t);
