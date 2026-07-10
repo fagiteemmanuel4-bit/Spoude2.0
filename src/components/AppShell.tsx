@@ -22,7 +22,6 @@ import { auth } from "@/lib/firebase";
 import { useTheme } from "@/lib/theme";
 import { Onboarding } from "@/components/Onboarding";
 import { NotificationBell } from "@/components/NotificationBell";
-import { FeedbackWidget } from "@/components/FeedbackWidget";
 import { toast } from "sonner";
 
 type NavItem = {
@@ -94,9 +93,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Onboarding */}
       <Onboarding />
-
-      {/* Feedback & Ratings Widget */}
-      <FeedbackWidget />
 
       {/* Domain Change Notification Bar */}
       {showNotice && (
@@ -205,25 +201,8 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
             <div className="flex flex-col gap-0.5">
               {items
                 .filter((n) => n.group === g)
-                .map(({ to, label, icon: Icon, soon }) => {
+                .map(({ to, label, icon: Icon }) => {
                   const active = pathname === to || pathname.startsWith(to + "/");
-                  if (soon) {
-                    return (
-                      <button
-                        key={label}
-                        onClick={() => toast.info(`${label} mode is coming soon!`)}
-                        className="group flex items-center justify-between w-full px-3 py-2 rounded-full text-[13px] font-medium text-muted-foreground/60 hover:text-foreground hover:bg-sidebar-accent cursor-pointer transition-all"
-                      >
-                        <span className="flex items-center gap-3">
-                          <Icon className="h-4 w-4" strokeWidth={1.5} />
-                          {label}
-                        </span>
-                        <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500">
-                          Soon
-                        </span>
-                      </button>
-                    );
-                  }
                   return (
                     <Link
                       key={to}
