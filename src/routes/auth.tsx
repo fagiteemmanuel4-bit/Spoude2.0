@@ -9,17 +9,8 @@ import {
   updateProfile,
   signInWithPopup,
 } from "firebase/auth";
-import { SpoudeMark } from "@/components/Logo";
 import { toast } from "sonner";
-import {
-  Loader2,
-  Mail,
-  Lock,
-  ShieldCheck,
-  ArrowRight,
-  User as UserIcon,
-  HelpCircle,
-} from "lucide-react";
+import { Loader2, Mail, Lock, ShieldCheck, ArrowRight, User as UserIcon, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
@@ -169,12 +160,18 @@ function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background lg:flex">
-      {/* LEFT — brand + photo + rotating expressive copy (desktop only) */}
+      {/* LEFT — brand + video + rotating expressive copy (desktop only) */}
       <div className="relative hidden lg:flex lg:w-1/2 xl:w-3/5 flex-col justify-between overflow-hidden">
-        {/* Background photo, faded under a dark gradient so text stays readable */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url(/auth-bg.mp4)" }}
+        {/* Background video — was a CSS background-image pointed at an .mp4, which
+            never renders. A real <video> element is required to actually play it. */}
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          src="/auth-bg.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
           aria-hidden
         />
         <div
@@ -186,12 +183,9 @@ function AuthPage() {
           aria-hidden
         />
 
-        {/* Logo + wordmark, top-left */}
-        <div className="relative z-10 flex items-center gap-2.5 px-10 pt-10">
-          <div className="h-10 w-10 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/15">
-            <SpoudeMark size={24} />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">Spoude</span>
+        {/* Logos, top-left — logo_1 leads, logo_2 sits right beside it */}
+        <div className="relative z-10 flex items-center gap-2 px-10 pt-10">
+          <img src="/logo_2.png" alt="" className="h-50 w-auto object-contain" />
         </div>
 
         {/* Rotating expressive line, bottom-left */}
@@ -217,26 +211,21 @@ function AuthPage() {
 
       {/* RIGHT — the auth form */}
       <div className="relative flex flex-1 flex-col min-h-screen lg:min-h-0">
-        {/* Mobile-only brand row (left panel is hidden below lg) */}
+        {/* Mobile-only brand row (left panel is hidden below lg) — logo_1 leads, logo_2 right beside it */}
         <div className="flex lg:hidden items-center gap-2 px-6 pt-6">
-          <div
-            className="h-9 w-9 rounded-2xl border border-border flex items-center justify-center"
-            style={{ background: "var(--popover)" }}
-          >
-            <SpoudeMark size={22} />
-          </div>
-          <span className="text-lg font-bold tracking-tight">Spoude</span>
+          <img src="/logo_1.png" alt="" className="h-11 w-auto object-contain" />
+          <img src="/logo_2.png" alt="" className="h-11 w-auto object-contain" />
         </div>
 
         <main className="flex-1 flex items-center justify-center px-4 py-10 lg:py-0">
           <div className="w-full max-w-sm">
             <div className="mb-8 animate-fade-up">
               <h1 className="text-[26px] font-bold tracking-tight leading-tight">
-                {mode === "signup"
-                  ? isUniversity
-                    ? "Create University Account"
-                    : "Create your Spoude account"
-                  : "Welcome back to Spoude"}
+                {mode === "signup" ? (
+                  isUniversity ? "Create University Account" : "Create your Spoude account"
+                ) : (
+                  "Welcome back to Spoude"
+                )}
               </h1>
               <p className="mt-1.5 text-[13px] text-muted-foreground max-w-xs">
                 {mode === "signup"
@@ -271,10 +260,7 @@ function AuthPage() {
 
                   <form onSubmit={submit} className="space-y-3">
                     {mode === "signup" && (
-                      <Field
-                        label={isUniversity ? "University Name" : "Name"}
-                        icon={<UserIcon className="h-4 w-4" />}
-                      >
+                      <Field label={isUniversity ? "University Name" : "Name"} icon={<UserIcon className="h-4 w-4" />}>
                         <input
                           type="text"
                           autoComplete="name"
@@ -287,10 +273,7 @@ function AuthPage() {
                         />
                       </Field>
                     )}
-                    <Field
-                      label={isUniversity ? "Administrative Email" : "Email"}
-                      icon={<Mail className="h-4 w-4" />}
-                    >
+                    <Field label={isUniversity ? "Administrative Email" : "Email"} icon={<Mail className="h-4 w-4" />}>
                       <input
                         type="email"
                         autoComplete="email"
@@ -366,8 +349,7 @@ function AuthPage() {
                             </span>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-[220px] p-2 text-xs">
-                            This option is for universities that want to officially upload verified
-                            study sheets and textbook guides to the public library.
+                            This option is for universities that want to officially upload verified study sheets and textbook guides to the public library.
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
