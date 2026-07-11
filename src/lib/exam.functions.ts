@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireFirebaseAuth } from "@/integrations/firebase-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { PLANS, type PlanId } from "./plans";
 
 const Input = z.object({
-  materialId: z.string(),
+  materialId: z.string().uuid(),
   count: z.number().int().min(5).max(50),
 });
 
@@ -21,21 +21,16 @@ function startOfMonthISO() {
 }
 
 export const generateExamFromMaterial = createServerFn({ method: "POST" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data, context }) => {
-    const { adminDb, adminStorage, userId } = context as {
-      adminDb: import("firebase-admin").firestore.Firestore;
-      adminStorage: import("firebase-admin").storage.Storage;
-      userId: string;
-    };
+    const { supabase, userId } = context;
 
-    if (!adminDb) {
-      throw new Error("Database not initialized");
-    }
-
-    const profileSnap = await adminDb.collection("profiles").doc(userId).get();
-    const profile = profileSnap.data();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", userId)
+      .maybeSingle();
     const planId: PlanId = (profile?.plan as PlanId) in PLANS ? (profile?.plan as PlanId) : "free";
     const plan = PLANS[planId];
     if (data.count > plan.maxQuestionsPerSet) {
@@ -44,13 +39,11 @@ export const generateExamFromMaterial = createServerFn({ method: "POST" })
       );
     }
 
-    const usageSnap = await adminDb
-      .collection("ai_usage")
-      .where("user_id", "==", userId)
-      .where("created_at", ">=", startOfMonthISO())
-      .get();
-    const used = usageSnap.size;
-    if (used >= plan.aiPerMonth) {
+    const { count: used } = await supabase
+      .from("ai_usage")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", startOfMonthISO());
+    if ((used ?? 0) >= plan.aiPerMonth) {
       throw new Error(
         `You've used all ${plan.aiPerMonth} lessons & exams on the ${plan.name} plan this month.`,
       );
@@ -59,20 +52,21 @@ export const generateExamFromMaterial = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Tutor is not configured");
 
-    const matSnap = await adminDb.collection("materials").doc(data.materialId).get();
-    if (!matSnap.exists) throw new Error("Material not found");
-    const mat = matSnap.data();
+    const { data: mat, error: matErr } = await supabase
+      .from("materials")
+      .select("storage_path, mime_type, file_name, title, subject")
+      .eq("id", data.materialId)
+      .maybeSingle();
+    if (matErr || !mat) throw new Error("Material not found");
 
-    let buf: Buffer;
-    try {
-      if (!adminStorage) throw new Error("Storage not initialized");
-      const fileRef = adminStorage.bucket().file(mat.storage_path);
-      const [downloaded] = await fileRef.download();
-      buf = downloaded;
-    } catch (err) {
-      throw new Error("Cannot read source file");
-    }
+    const { data: signed, error: sErr } = await supabase.storage
+      .from("materials")
+      .createSignedUrl(mat.storage_path, 120);
+    if (sErr || !signed) throw new Error("Cannot read source file");
 
+    const fileRes = await fetch(signed.signedUrl);
+    if (!fileRes.ok) throw new Error("Could not download source");
+    const buf = new Uint8Array(await fileRes.arrayBuffer());
     let bin = "";
     const chunk = 0x8000;
     for (let i = 0; i < buf.length; i += chunk) {
@@ -137,51 +131,41 @@ Make exactly ${data.count} multiple-choice questions. All facts must come from t
       Math.min(180, Math.round(parsed.time_limit_minutes ?? items.length * 1.5)),
     );
 
-    const insertedRef = await adminDb.collection("study_sets").add({
-      user_id: userId,
-      kind: "exam",
-      title,
-      subject: mat.subject ?? null,
-      source_material_id: data.materialId,
-      questions: items,
-      time_limit_minutes: timeLimit,
-      ai_generated: true,
-      created_at: new Date().toISOString(),
-    });
+    const { data: inserted, error: insErr } = await supabase
+      .from("study_sets")
+      .insert({
+        user_id: userId,
+        kind: "exam",
+        title,
+        subject: mat.subject ?? null,
+        source_material_id: data.materialId,
+        questions: items,
+        time_limit_minutes: timeLimit,
+        ai_generated: true,
+      })
+      .select("id")
+      .single();
+    if (insErr) throw new Error(insErr.message);
 
-    await adminDb.collection("ai_usage").add({
-      user_id: userId,
-      kind: "exam",
-      created_at: new Date().toISOString(),
-    });
-
-    return { id: insertedRef.id, title, count: items.length, time_limit_minutes: timeLimit };
+    await supabase.from("ai_usage").insert({ user_id: userId, kind: "exam" });
+    return { id: inserted.id, title, count: items.length, time_limit_minutes: timeLimit };
   });
 
 export const getUsage = createServerFn({ method: "GET" })
-  .middleware([requireFirebaseAuth])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { adminDb, userId } = context as {
-      adminDb: import("firebase-admin").firestore.Firestore;
-      userId: string;
-    };
-    if (!adminDb) {
-      return {
-        plan: "free" as PlanId,
-        used: 0,
-        limit: PLANS["free"].aiPerMonth,
-        remaining: PLANS["free"].aiPerMonth,
-      };
-    }
-    const profileSnap = await adminDb.collection("profiles").doc(userId).get();
-    const profile = profileSnap.data();
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", userId)
+      .maybeSingle();
     const planId: PlanId = (profile?.plan as PlanId) in PLANS ? (profile?.plan as PlanId) : "free";
-    const usageSnap = await adminDb
-      .collection("ai_usage")
-      .where("user_id", "==", userId)
-      .where("created_at", ">=", startOfMonthISO())
-      .get();
+    const { count } = await supabase
+      .from("ai_usage")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", startOfMonthISO());
     const limit = PLANS[planId].aiPerMonth;
-    const used = usageSnap.size;
+    const used = count ?? 0;
     return { plan: planId, used, limit, remaining: Math.max(0, limit - used) };
   });

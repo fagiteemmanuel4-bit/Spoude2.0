@@ -1,15 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { getCurrentUser } from "@/lib/firebase";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Landing page removed on user request.
- * Signed-in users land on /spoude; everyone else goes to /auth.
+ * Signed-in users land on /lumio; everyone else goes to /auth.
  */
 export const Route = createFileRoute("/")({
   ssr: false,
   beforeLoad: async () => {
-    const user = await getCurrentUser();
-    if (user) throw redirect({ to: "/spoude", replace: true });
+    const { data } = await supabase.auth.getUser();
+    if (data.user) throw redirect({ to: "/lumio", replace: true });
     throw redirect({ to: "/auth", replace: true });
   },
   component: () => null,

@@ -1,14 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { auth, getCurrentUser } from "@/lib/firebase";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updateProfile,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { SpoudeMark } from "@/components/Logo";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -85,8 +80,8 @@ function AuthPage() {
   const [wordFade, setWordFade] = useState(true);
 
   useEffect(() => {
-    getCurrentUser().then((user) => {
-      if (user) navigate({ to: "/spoude", replace: true });
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) navigate({ to: "/lumio", replace: true });
     });
   }, [navigate]);
 
@@ -112,30 +107,40 @@ function AuthPage() {
           toast.error(parsed.error.issues[0].message);
           return;
         }
-        // Firebase sign up
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          parsed.data.email,
-          parsed.data.password,
-        );
-        // Set display name in Firebase Auth
-        if (userCredential.user) {
-          await updateProfile(userCredential.user, {
-            displayName: parsed.data.name.trim(),
-          });
-        }
+        const { error } = await supabase.auth.signUp({
+          email: parsed.data.email,
+          password: parsed.data.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/lumio`,
+            data: { display_name: parsed.data.name },
+          },
+        });
+        if (error) throw error;
         toast.success("Account created. Welcome to Spoude!");
-        navigate({ to: "/spoude", replace: true });
+        navigate({ to: "/lumio", replace: true });
       } else {
         const parsed = signinSchema.safeParse(form);
         if (!parsed.success) {
           toast.error(parsed.error.issues[0].message);
           return;
         }
-        // Firebase sign in
-        await signInWithEmailAndPassword(auth, parsed.data.email, parsed.data.password);
+        const { error } = await supabase.auth.signInWithPassword({
+          email: parsed.data.email,
+          password: parsed.data.password,
+        });
+        if (error) throw error;
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (aal?.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel) {
+          const { data: factors } = await supabase.auth.mfa.listFactors();
+          const totp = factors?.totp?.[0];
+          if (totp) {
+            setMfa({ factorId: totp.id, code: "" });
+            setStep("mfa");
+            return;
+          }
+        }
         toast.success("Welcome back");
-        navigate({ to: "/spoude", replace: true });
+        navigate({ to: "/lumio", replace: true });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Authentication failed");
@@ -146,21 +151,43 @@ function AuthPage() {
 
   const verifyMfa = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.error("MFA is not configured.");
+    if (mfa.code.length !== 6) {
+      toast.error("Enter the 6-digit code");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({
+        factorId: mfa.factorId,
+      });
+      if (cErr) throw cErr;
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfa.factorId,
+        challengeId: challenge.id,
+        code: mfa.code,
+      });
+      if (error) throw error;
+      toast.success("Verified");
+      navigate({ to: "/lumio", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Invalid code");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const google = async () => {
     setLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success("Signed in with Google");
-      navigate({ to: "/spoude", replace: true });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
-    } finally {
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin + "/auth",
+    });
+    if (result.error) {
+      toast.error(result.error.message ?? "Google sign-in failed");
       setLoading(false);
+      return;
     }
+    if (result.redirected) return;
+    navigate({ to: "/lumio", replace: true });
   };
 
   return (
@@ -191,8 +218,9 @@ function AuthPage() {
 
         {/* Small top header branding */}
         <div className="flex items-center gap-2">
+          <SpoudeMark size={28} />
           <span
-            className="font-bold text-lg tracking-tight bg-gradient-to-r from-[#5b7cff] to-[#2f3fd9] bg-clip-text text-transparent"
+            className="font-bold text-lg tracking-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Spoude
@@ -204,13 +232,12 @@ function AuthPage() {
           {/* Tagline */}
           <div className="flex flex-col items-center text-center mb-8 animate-fade-up">
             <h1 className="flex items-center gap-2 text-[26px] font-bold tracking-tight leading-tight">
-              Welcome to{" "}
-              <span
-                className="font-extrabold tracking-tight bg-gradient-to-r from-[#5b7cff] to-[#2f3fd9] bg-clip-text text-transparent"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Spoude
-              </span>
+              Welcome to
+              <img
+                src="/logo_1.png"
+                alt="Spoude"
+                className="inline-block h-[1em] w-auto align-middle"
+              />
             </h1>
             <p className="mt-1.5 text-[13px] text-muted-foreground max-w-xs">
               {mode === "signup"

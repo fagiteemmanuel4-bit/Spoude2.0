@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { auth } from "@/lib/firebase";
-import { updateProfile } from "firebase/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ShieldCheck,
@@ -199,46 +198,91 @@ function Settings() {
   const [loadingFactors, setLoadingFactors] = useState(true);
 
   const refreshFactors = async () => {
+    setLoadingFactors(true);
+    const { data } = await supabase.auth.mfa.listFactors();
+    const verified = data?.totp?.find((f) => f.status === "verified");
+    setFactorId(verified?.id ?? null);
     setLoadingFactors(false);
   };
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (user) {
-      setEmail(user.email ?? "");
-      setName(user.displayName ?? "");
-    }
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? "");
+      setName((data.user?.user_metadata?.display_name as string | undefined) ?? "");
+    });
     refreshFactors();
   }, []);
 
   const saveName = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingName(true);
-    let error: Error | null = null;
-    try {
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { displayName: name.trim() });
-      } else {
-        throw new Error("No user authenticated");
-      }
-    } catch (err) {
-      error = err instanceof Error ? err : new Error(String(err));
-    }
+    const { error } = await supabase.auth.updateUser({ data: { display_name: name.trim() } });
     setSavingName(false);
     if (error) toast.error(error.message);
     else toast.success("Profile updated");
   };
 
   const startEnroll = async () => {
-    toast.info("2FA is managed through your identity provider.");
+    setEnrolling(true);
+    try {
+      // Clean up any unverified factors first
+      const { data: list } = await supabase.auth.mfa.listFactors();
+      for (const f of list?.totp ?? []) {
+        if (f.status !== "verified") await supabase.auth.mfa.unenroll({ factorId: f.id });
+      }
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: "totp",
+        friendlyName: "Spoude TOTP",
+      });
+      if (error) throw error;
+      setEnrollData({ factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start enrollment");
+    } finally {
+      setEnrolling(false);
+    }
   };
 
   const confirmEnroll = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!enrollData) return;
+    if (verifyCode.length !== 6) {
+      toast.error("Enter the 6-digit code");
+      return;
+    }
+    setEnrolling(true);
+    try {
+      const { data: ch, error: cErr } = await supabase.auth.mfa.challenge({
+        factorId: enrollData.factorId,
+      });
+      if (cErr) throw cErr;
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: enrollData.factorId,
+        challengeId: ch.id,
+        code: verifyCode,
+      });
+      if (error) throw error;
+      toast.success("Two-factor authentication enabled");
+      setEnrollData(null);
+      setVerifyCode("");
+      await refreshFactors();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Verification failed");
+    } finally {
+      setEnrolling(false);
+    }
   };
 
   const disable = async () => {
-    toast.info("2FA is managed through your identity provider.");
+    if (!factorId) return;
+    if (!confirm("Turn off two-factor authentication?")) return;
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Two-factor authentication disabled");
+    await refreshFactors();
   };
 
   return (

@@ -1,8 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { auth } from "@/lib/firebase";
-import { getStudySet, addAttempt } from "@/lib/firestore-db";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowLeft,
   ArrowRight,
@@ -43,8 +42,12 @@ function SetPlayPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["set", id],
     queryFn: async () => {
-      const data = await getStudySet(id);
-      if (!data) throw new Error("Not found");
+      const { data, error } = await supabase
+        .from("study_sets")
+        .select("id,kind,title,subject,questions,time_limit_minutes,ai_generated")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
       return data as unknown as SetRow;
     },
   });
@@ -59,7 +62,7 @@ function SetPlayPage() {
     return (
       <div className="surface p-10 text-center text-sm text-muted-foreground">
         Couldn't load this set.{" "}
-        <Link to="/spoude" className="text-primary hover:underline">
+        <Link to="/lumio" className="text-primary hover:underline">
           Go back
         </Link>
       </div>
@@ -323,10 +326,10 @@ function QuizPlayer({ set, onExit }: { set: SetRow; onExit?: () => void }) {
   async function finalize() {
     if (submitted) return;
     setSubmitted(true);
-    const u = auth.currentUser;
-    if (u) {
-      await addAttempt({
-        user_id: u.uid,
+    const { data: u } = await supabase.auth.getUser();
+    if (u.user) {
+      await supabase.from("attempts").insert({
+        user_id: u.user.id,
         set_id: set.id,
         score,
         total,

@@ -2,8 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { auth } from "@/lib/firebase";
-import { getStudySets, deleteStudySet } from "@/lib/firestore-db";
+import { supabase } from "@/integrations/supabase/client";
 import { MaterialPicker, type PickerMaterial } from "@/components/MaterialPicker";
 import { generateExamFromMaterial, getUsage } from "@/lib/exam.functions";
 import { planFor } from "@/lib/plans";
@@ -34,9 +33,13 @@ function ExamsPage() {
 
   const { data: exams = [], isLoading } = useQuery({
     queryKey: ["sets", "exam"],
-    enabled: !!auth.currentUser?.uid,
     queryFn: async () => {
-      const data = await getStudySets(auth.currentUser!.uid, "exam");
+      const { data, error } = await supabase
+        .from("study_sets")
+        .select("id,title,subject,questions,time_limit_minutes,created_at")
+        .eq("kind", "exam")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
       return (data ?? []) as unknown as ExamRow[];
     },
   });
@@ -63,13 +66,10 @@ function ExamsPage() {
 
   const remove = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"?`)) return;
-    try {
-      await deleteStudySet(id);
-      toast.success("Deleted");
-      qc.invalidateQueries({ queryKey: ["sets", "exam"] });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not delete");
-    }
+    const { error } = await supabase.from("study_sets").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Deleted");
+    qc.invalidateQueries({ queryKey: ["sets", "exam"] });
   };
 
   return (

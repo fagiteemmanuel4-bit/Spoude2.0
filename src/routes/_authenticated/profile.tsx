@@ -1,15 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { auth } from "@/lib/firebase";
-import {
-  getProfile,
-  saveProfile,
-  getProfileCounts,
-  getAccountEvents,
-  addAccountEvent,
-} from "@/lib/firestore-db";
-import { signOut, updatePassword, sendPasswordResetEmail } from "firebase/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   User as UserIcon,
@@ -65,10 +57,16 @@ function ProfilePage() {
   const { data: me, isLoading } = useQuery({
     queryKey: ["me-full-profile"],
     queryFn: async () => {
-      const u = auth.currentUser;
-      if (!u) return null;
-      const data = await getProfile(u.uid);
-      return { user: u, profile: data as Profile | null };
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select(
+          "id,username,display_name,avatar_url,bio,plan,honor_score,current_streak,longest_streak",
+        )
+        .eq("id", u.user.id)
+        .maybeSingle();
+      return { user: u.user, profile: data as Profile | null };
     },
   });
 
@@ -80,9 +78,19 @@ function ProfilePage() {
 
   const { data: counts, isLoading: countsLoading } = useQuery({
     queryKey: ["profile-counts"],
-    enabled: !!me?.user?.uid,
     queryFn: async () => {
-      return await getProfileCounts(me!.user!.uid);
+      const [mats, sets, atts, posts] = await Promise.all([
+        supabase.from("materials").select("id", { count: "exact", head: true }),
+        supabase.from("study_sets").select("id", { count: "exact", head: true }),
+        supabase.from("attempts").select("id", { count: "exact", head: true }),
+        supabase.from("posts").select("id", { count: "exact", head: true }),
+      ]);
+      return {
+        materials: mats.count ?? 0,
+        sets: sets.count ?? 0,
+        attempts: atts.count ?? 0,
+        posts: posts.count ?? 0,
+      };
     },
   });
 
@@ -93,7 +101,11 @@ function ProfilePage() {
 
   useEffect(() => {
     if (me?.profile) {
-      setDisplayName(me.profile.display_name ?? (me.user.displayName as string | undefined) ?? "");
+      setDisplayName(
+        me.profile.display_name ??
+          (me.user.user_metadata?.display_name as string | undefined) ??
+          "",
+      );
       setBio(me.profile.bio ?? "");
     }
   }, [me]);
@@ -117,15 +129,10 @@ function ProfilePage() {
 
   const save = async () => {
     setSaving(true);
-    let error: Error | null = null;
-    try {
-      await saveProfile(me.user.uid, {
-        display_name: displayName.trim() || null,
-        bio: bio.trim() || null,
-      });
-    } catch (err) {
-      error = err instanceof Error ? err : new Error(String(err));
-    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: displayName.trim() || null, bio: bio.trim() || null })
+      .eq("id", me.user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Profile updated");
@@ -136,7 +143,7 @@ function ProfilePage() {
   const logout = async () => {
     await qc.cancelQueries();
     qc.clear();
-    await signOut(auth);
+    await supabase.auth.signOut();
     toast.success("Signed out");
     router.navigate({ to: "/auth", replace: true });
   };
@@ -462,21 +469,26 @@ function SecurityPanel({ email }: { email: string }) {
 
   const { data: events = [] } = useQuery({
     queryKey: ["account-events"],
-    enabled: !!me?.user?.uid,
     queryFn: async () => {
-      return await getAccountEvents(me!.user!.uid, 15);
+      const { data } = await supabase
+        .from("account_events")
+        .select("id,event_type,detail,created_at")
+        .order("created_at", { ascending: false })
+        .limit(15);
+      return data ?? [];
     },
   });
 
   const logEvent = async (event_type: string, detail?: string) => {
-    const u = auth.currentUser;
-    if (!u) return;
-    try {
-      await addAccountEvent(u.uid, event_type, detail ?? null, navigator.userAgent);
-      qc.invalidateQueries({ queryKey: ["account-events"] });
-    } catch (e) {
-      // ignore
-    }
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    await supabase.from("account_events").insert({
+      user_id: u.user.id,
+      event_type,
+      detail: detail ?? null,
+      user_agent: navigator.userAgent,
+    });
+    qc.invalidateQueries({ queryKey: ["account-events"] });
   };
 
   const changePw = async (e: React.FormEvent) => {
@@ -484,16 +496,7 @@ function SecurityPanel({ email }: { email: string }) {
     if (pw.length < 8) return toast.error("Use at least 8 characters");
     if (pw !== pw2) return toast.error("Passwords don't match");
     setChanging(true);
-    let error: Error | null = null;
-    try {
-      if (auth.currentUser) {
-        await updatePassword(auth.currentUser, pw);
-      } else {
-        throw new Error("No user authenticated");
-      }
-    } catch (err) {
-      error = err instanceof Error ? err : new Error(String(err));
-    }
+    const { error } = await supabase.auth.updateUser({ password: pw });
     setChanging(false);
     if (error) return toast.error(error.message);
     toast.success("Password updated");
@@ -504,14 +507,11 @@ function SecurityPanel({ email }: { email: string }) {
 
   const sendReset = async () => {
     if (!email) return;
-    try {
-      await sendPasswordResetEmail(auth, email, {
-        url: `${window.location.origin}/auth`,
-      });
-      toast.success("Reset link sent to your email");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send reset link");
-    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Reset link sent to your email");
   };
 
   const takeBreak = async () => {

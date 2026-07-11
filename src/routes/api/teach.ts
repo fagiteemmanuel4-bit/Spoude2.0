@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { adminAuth, adminDb, adminStorage } from "@/integrations/firebase-admin";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { styleById } from "@/lib/teaching-styles";
 
 type Body = {
@@ -17,19 +18,12 @@ export const Route = createFileRoute("/api/teach")({
         if (!authHeader.toLowerCase().startsWith("bearer ")) {
           return new Response("Unauthorized", { status: 401 });
         }
-        const token = authHeader.replace(/Bearer /i, "").trim();
         const apiKey = process.env.LOVABLE_API_KEY;
-        if (!apiKey || !adminAuth || !adminDb || !adminStorage) {
+        const supaUrl = process.env.SUPABASE_URL;
+        const supaKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!apiKey || !supaUrl || !supaKey) {
           return new Response("Server not configured", { status: 500 });
         }
-
-        let decoded: import("firebase-admin").auth.DecodedIdToken;
-        try {
-          decoded = await adminAuth.verifyIdToken(token);
-        } catch {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const userId = decoded.uid;
 
         let body: Body;
         try {
@@ -45,19 +39,29 @@ export const Route = createFileRoute("/api/teach")({
         const previousSummary =
           typeof body.previousSummary === "string" ? body.previousSummary.slice(0, 4000) : "";
 
-        const matSnap = await adminDb.collection("materials").doc(materialId).get();
-        if (!matSnap.exists) return new Response("Not found", { status: 404 });
-        const mat = matSnap.data();
+        const supabase = createClient<Database>(supaUrl, supaKey, {
+          global: { headers: { Authorization: authHeader } },
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
 
-        let buf: Buffer;
-        try {
-          const fileRef = adminStorage.bucket().file(mat.storage_path);
-          const [downloaded] = await fileRef.download();
-          buf = downloaded;
-        } catch (err) {
-          return new Response("Cannot read file", { status: 500 });
-        }
+        const { data: u } = await supabase.auth.getUser();
+        if (!u.user) return new Response("Unauthorized", { status: 401 });
 
+        const { data: mat, error: matErr } = await supabase
+          .from("materials")
+          .select("storage_path, mime_type, file_name, title, subject")
+          .eq("id", materialId)
+          .maybeSingle();
+        if (matErr || !mat) return new Response("Not found", { status: 404 });
+
+        const { data: signed, error: sErr } = await supabase.storage
+          .from("materials")
+          .createSignedUrl(mat.storage_path, 120);
+        if (sErr || !signed) return new Response("Cannot read file", { status: 500 });
+
+        const fileRes = await fetch(signed.signedUrl);
+        if (!fileRes.ok) return new Response("Could not download source", { status: 500 });
+        const buf = new Uint8Array(await fileRes.arrayBuffer());
         let bin = "";
         const chunk = 0x8000;
         for (let i = 0; i < buf.length; i += chunk) {
@@ -82,11 +86,7 @@ Now go DEEPER. Do not repeat what was already covered — build on it. Introduce
         const userMsg = page === 1 ? firstPageMsg : nextPageMsg;
 
         // Log usage (fire-and-forget)
-        void adminDb.collection("ai_usage").add({
-          user_id: userId,
-          kind: "study",
-          created_at: new Date().toISOString(),
-        });
+        void supabase.from("ai_usage").insert({ user_id: u.user.id, kind: "study" });
 
         const gwRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",

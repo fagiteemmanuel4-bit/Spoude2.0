@@ -12,8 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { ThemeProvider, themeInitScript } from "@/lib/theme";
 
 function NotFoundComponent() {
@@ -159,11 +158,12 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
-      queryClient.invalidateQueries();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
-    return () => unsubscribe();
+    return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
 
   return (
