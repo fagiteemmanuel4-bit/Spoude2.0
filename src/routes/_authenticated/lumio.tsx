@@ -109,6 +109,21 @@ function HomePage() {
     },
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["home-profile"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getUser();
+      const uid = data.user?.id;
+      if (!uid) return null;
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("current_streak, honor_score")
+        .eq("id", uid)
+        .single();
+      return p;
+    },
+  });
+
   const { data: usage, isLoading: usageLoading } = useQuery({ queryKey: ["ai-usage"], queryFn: () => getUsage() });
   const plan = planFor(usage?.plan);
 
@@ -143,6 +158,22 @@ function HomePage() {
           <p className="text-[13px] text-muted-foreground max-w-md">
             Pick how you want to learn today.
           </p>
+          {profile && ((profile.current_streak ?? 0) > 0 || (profile.honor_score ?? 0) > 0) && (
+            <div className="flex items-center gap-2 pt-1.5">
+              {(profile.current_streak ?? 0) > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 text-amber-600 dark:text-amber-300 px-2.5 py-1 text-[11px] font-semibold">
+                  <Flame className={`h-3 w-3 ${(profile.current_streak ?? 0) >= 3 ? "animate-pulse" : ""}`} />
+                  {profile.current_streak} day{profile.current_streak === 1 ? "" : "s"} streak
+                </span>
+              )}
+              {(profile.honor_score ?? 0) > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/12 text-primary px-2.5 py-1 text-[11px] font-semibold">
+                  <Trophy className="h-3 w-3" />
+                  {profile.honor_score} honor
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <Link
           to="/library"
@@ -360,6 +391,3 @@ function ActivityRow({
   }
   return <Link to="/library" search={{ type: href.type }} className={cls}>{inner}</Link>;
 }
-
-// Trophy import used above for icons in future extensions; keep tree-shakable.
-void Trophy;

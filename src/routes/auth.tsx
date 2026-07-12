@@ -11,6 +11,9 @@ import {
   ShieldCheck,
   ArrowRight,
   User as UserIcon,
+  Volume2,
+  VolumeX,
+  KeyRound,
 } from "lucide-react";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
@@ -44,6 +47,7 @@ const signinSchema = z.object({
 });
 
 type Step = "credentials" | "mfa";
+type Mode = "signin" | "signup" | "forgot" | "reset";
 
 // Brand colors lifted from the Spoude logo — blue wordmark, gold "e".
 const SPOUDE_BLUE = "#4F6EF5";
@@ -95,12 +99,43 @@ function useRotatingLine(lines: string[], intervalMs = 4500) {
 function AuthPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const [mode, setMode] = useState<"signin" | "signup">(search.mode ?? "signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">(search.mode ?? "signin");
   const [step, setStep] = useState<Step>("credentials");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", name: "" });
   const [mfa, setMfa] = useState({ factorId: "", code: "" });
+  const [resetSent, setResetSent] = useState(false);
   const { line, visible } = useRotatingLine(EXPRESSIVE_LINES);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [soundOn, setSoundOn] = useState(false);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.volume = 0.7;
+    // Try autoplay with sound first — most browsers block this unless the
+    // visitor already has engagement with the site, so we fall back to
+    // muted autoplay (always allowed) and let them tap the speaker to
+    // turn sound on themselves.
+    el.muted = false;
+    el.play()
+      .then(() => setSoundOn(true))
+      .catch(() => {
+        el.muted = true;
+        setSoundOn(false);
+        el.play().catch(() => {});
+      });
+  }, []);
+
+  const toggleSound = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    const next = !soundOn;
+    el.muted = !next;
+    el.volume = 0.7;
+    if (next) el.play().catch(() => {});
+    setSoundOn(next);
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -206,16 +241,39 @@ function AuthPage() {
     navigate({ to: "/lumio", replace: true });
   };
 
+  const sendResetEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = z.string().trim().email("Enter a valid email").max(255).safeParse(form.email);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setResetSent(true);
+    } catch (err) {
+      // Don't reveal whether the email exists — show success either way to avoid
+      // leaking which addresses have accounts.
+      setResetSent(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background lg:flex">
       {/* LEFT — brand + photo + rotating expressive copy (desktop only) */}
       <div className="relative hidden lg:flex lg:w-1/2 xl:w-3/5 flex-col justify-between overflow-hidden">
         <video
+          ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"
           src="/auth.mp4"
           autoPlay
           loop
-          muted
           playsInline
           aria-hidden
         />
@@ -238,6 +296,17 @@ function AuthPage() {
           }}
           aria-hidden
         />
+
+        {/* Sound toggle — browsers block unmuted autoplay on a fresh visit, so we try
+            sound-on first and always give an explicit control either way. */}
+        <button
+          type="button"
+          onClick={toggleSound}
+          aria-label={soundOn ? "Mute video" : "Unmute video"}
+          className="absolute bottom-6 right-8 z-10 h-9 w-9 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+        >
+          {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+        </button>
 
         {/* Logo, top-left — text wordmark on a soft glass pill so it reads over the photo */}
         <div className="relative z-10 px-10 pt-10">
@@ -277,12 +346,18 @@ function AuthPage() {
           <div className="w-full max-w-sm">
             <div className="mb-8 animate-fade-up">
               <h1 className="text-[26px] font-bold tracking-tight leading-tight">
-                {mode === "signup" ? "Create your Spoude account" : "Welcome back to Spoude"}
+                {mode === "signup"
+                  ? "Create your Spoude account"
+                  : mode === "forgot"
+                    ? "Reset your password"
+                    : "Welcome back to Spoude"}
               </h1>
               <p className="mt-1.5 text-[13px] text-muted-foreground max-w-xs">
                 {mode === "signup"
                   ? "One quiet space for every note, homework and past paper."
-                  : "Sign in to continue where you left off."}
+                  : mode === "forgot"
+                    ? "Enter the email on your account and we'll send you a reset link."
+                    : "Sign in to continue where you left off."}
               </p>
             </div>
 
@@ -291,6 +366,55 @@ function AuthPage() {
               style={{ background: "var(--popover)", animationDelay: "60ms" }}
             >
               {step === "credentials" ? (
+                mode === "forgot" ? (
+                  resetSent ? (
+                    <div className="text-center py-4">
+                      <div className="h-11 w-11 rounded-2xl bg-primary-soft mx-auto flex items-center justify-center">
+                        <Mail className="h-5 w-5 text-primary" />
+                      </div>
+                      <p className="mt-4 text-sm font-medium">Check your inbox</p>
+                      <p className="mt-1 text-xs text-muted-foreground max-w-[220px] mx-auto">
+                        If an account exists for <span className="text-foreground">{form.email}</span>, a reset link is on its way.
+                      </p>
+                      <button
+                        onClick={() => { setMode("signin"); setResetSent(false); }}
+                        className="mt-5 text-[13px] font-semibold text-primary hover:underline"
+                      >
+                        Back to sign in
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={sendResetEmail} className="space-y-3">
+                      <Field label="Email" icon={<Mail className="h-4 w-4" />}>
+                        <input
+                          type="email"
+                          autoComplete="email"
+                          required
+                          maxLength={255}
+                          value={form.email}
+                          onChange={(e) => setForm({ ...form, email: e.target.value })}
+                          className="w-full bg-transparent outline-none text-sm"
+                          placeholder="you@school.edu"
+                        />
+                      </Field>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="ripple w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-full px-4 py-3 text-[13px] font-semibold shadow-elev-1 hover:shadow-glow transition-all disabled:opacity-60"
+                      >
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                        Send reset link
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMode("signin")}
+                        className="w-full text-center text-[13px] text-muted-foreground hover:text-foreground transition-colors pt-1"
+                      >
+                        Back to sign in
+                      </button>
+                    </form>
+                  )
+                ) : (
                 <>
                   <button
                     type="button"
@@ -334,18 +458,29 @@ function AuthPage() {
                         placeholder="you@school.edu"
                       />
                     </Field>
-                    <Field label="Password" icon={<Lock className="h-4 w-4" />}>
-                      <input
-                        type="password"
-                        autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                        required
-                        maxLength={72}
-                        value={form.password}
-                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                        className="w-full bg-transparent outline-none text-sm"
-                        placeholder={mode === "signup" ? "8+ chars, mixed case, number" : "••••••••"}
-                      />
-                    </Field>
+                    <div>
+                      <Field label="Password" icon={<Lock className="h-4 w-4" />}>
+                        <input
+                          type="password"
+                          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                          required
+                          maxLength={72}
+                          value={form.password}
+                          onChange={(e) => setForm({ ...form, password: e.target.value })}
+                          className="w-full bg-transparent outline-none text-sm"
+                          placeholder={mode === "signup" ? "8+ chars, mixed case, number" : "••••••••"}
+                        />
+                      </Field>
+                      {mode === "signin" && (
+                        <button
+                          type="button"
+                          onClick={() => { setMode("forgot"); setResetSent(false); }}
+                          className="mt-1.5 block ml-auto text-[11.5px] text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
 
                     <button
                       type="submit"
@@ -371,6 +506,7 @@ function AuthPage() {
                     </button>
                   </p>
                 </>
+                )
               ) : (
                 <>
                   <div className="h-10 w-10 rounded-full bg-primary-soft flex items-center justify-center">
