@@ -12,13 +12,13 @@ import {
   X,
   Wifi,
   Search,
-  Bell,
   Sun,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
 import { SpoudeMark, SpoudeWordmark } from "@/components/Logo";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme";
@@ -133,9 +133,7 @@ function DesktopTopBar() {
           <input placeholder="Search Spoude…" className="w-full bg-transparent outline-none text-xs placeholder:text-muted-foreground/70" />
         </div>
         <ThemeToggle />
-        <button className="p-1.5 rounded-full hover:bg-sidebar-accent text-muted-foreground transition-colors" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
-        </button>
+        <NotificationBell variant="desktop" />
         <Link
           to="/profile"
           className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-sidebar-accent transition-colors"
@@ -258,9 +256,7 @@ function MobileHeader() {
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
-        <Link to="/lumio" className="p-2 rounded-full text-muted-foreground hover:text-foreground" aria-label="Notifications">
-          <Bell className="h-5 w-5" />
-        </Link>
+        <NotificationBell variant="mobile" />
       </div>
     </div>
   );
