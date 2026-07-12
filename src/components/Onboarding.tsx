@@ -70,7 +70,7 @@ function WelcomeModal({ onDone, onSkip }: { onDone: () => void; onSkip: () => vo
           <div className="relative">
             <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-lg animate-shimmer" />
             <div className="relative h-11 w-11 rounded-2xl bg-primary/12 flex items-center justify-center">
-              <LumioMark size={22} />
+              <SpoudeMark size={22} />
             </div>
           </div>
           <div>
