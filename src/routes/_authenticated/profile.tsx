@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+<<<<<<< HEAD
 import { auth } from "@/lib/firebase";
 import {
   getProfile,
@@ -10,6 +11,9 @@ import {
   addAccountEvent,
 } from "@/lib/firestore-db";
 import { signOut, updatePassword, sendPasswordResetEmail } from "firebase/auth";
+=======
+import { supabase } from "@/integrations/supabase/client";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import { toast } from "sonner";
 import {
   User as UserIcon,
@@ -41,7 +45,11 @@ import { StatCardSkeleton, MiniStatSkeleton } from "@/components/Skeletons";
 import { resetOnboarding } from "@/components/Onboarding";
 
 export const Route = createFileRoute("/_authenticated/profile")({
+<<<<<<< HEAD
   head: () => ({ meta: [{ title: "Profile — Spoude" }] }),
+=======
+  head: () => ({ meta: [{ title: "Profile — Lumio" }] }),
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   component: ProfilePage,
 });
 
@@ -65,6 +73,7 @@ function ProfilePage() {
   const { data: me, isLoading } = useQuery({
     queryKey: ["me-full-profile"],
     queryFn: async () => {
+<<<<<<< HEAD
       const u = auth.currentUser;
       if (!u) return null;
       const data = await getProfile(u.uid);
@@ -76,13 +85,43 @@ function ProfilePage() {
     queryKey: ["ai-usage"],
     queryFn: () => getUsage(),
   });
+=======
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,username,display_name,avatar_url,bio,plan,honor_score,current_streak,longest_streak")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      return { user: u.user, profile: (data as Profile | null) };
+    },
+  });
+
+  const { data: usage, isLoading: usageLoading } = useQuery({ queryKey: ["ai-usage"], queryFn: () => getUsage() });
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   const plan = planFor(usage?.plan ?? me?.profile?.plan);
 
   const { data: counts, isLoading: countsLoading } = useQuery({
     queryKey: ["profile-counts"],
+<<<<<<< HEAD
     enabled: !!me?.user?.uid,
     queryFn: async () => {
       return await getProfileCounts(me!.user!.uid);
+=======
+    queryFn: async () => {
+      const [mats, sets, atts, posts] = await Promise.all([
+        supabase.from("materials").select("id", { count: "exact", head: true }),
+        supabase.from("study_sets").select("id", { count: "exact", head: true }),
+        supabase.from("attempts").select("id", { count: "exact", head: true }),
+        supabase.from("posts").select("id", { count: "exact", head: true }),
+      ]);
+      return {
+        materials: mats.count ?? 0,
+        sets: sets.count ?? 0,
+        attempts: atts.count ?? 0,
+        posts: posts.count ?? 0,
+      };
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     },
   });
 
@@ -93,7 +132,11 @@ function ProfilePage() {
 
   useEffect(() => {
     if (me?.profile) {
+<<<<<<< HEAD
       setDisplayName(me.profile.display_name ?? (me.user.displayName as string | undefined) ?? "");
+=======
+      setDisplayName(me.profile.display_name ?? (me.user.user_metadata?.display_name as string | undefined) ?? "");
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       setBio(me.profile.bio ?? "");
     }
   }, [me]);
@@ -117,6 +160,7 @@ function ProfilePage() {
 
   const save = async () => {
     setSaving(true);
+<<<<<<< HEAD
     let error: Error | null = null;
     try {
       await saveProfile(me.user.uid, {
@@ -126,6 +170,12 @@ function ProfilePage() {
     } catch (err) {
       error = err instanceof Error ? err : new Error(String(err));
     }
+=======
+    const { error } = await supabase
+      .from("profiles")
+      .update({ display_name: displayName.trim() || null, bio: bio.trim() || null })
+      .eq("id", me.user.id);
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Profile updated");
@@ -136,7 +186,11 @@ function ProfilePage() {
   const logout = async () => {
     await qc.cancelQueries();
     qc.clear();
+<<<<<<< HEAD
     await signOut(auth);
+=======
+    await supabase.auth.signOut();
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     toast.success("Signed out");
     router.navigate({ to: "/auth", replace: true });
   };
@@ -147,6 +201,7 @@ function ProfilePage() {
     <div className="space-y-6 animate-fade-up">
       {/* ==== Identity card ==== */}
       <section className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 sm:p-8">
+<<<<<<< HEAD
         <div
           className="absolute inset-0 opacity-40 pointer-events-none"
           style={{
@@ -162,6 +217,14 @@ function ProfilePage() {
               ) : (
                 avatarInitial
               )}
+=======
+        <div className="absolute inset-0 opacity-40 pointer-events-none"
+          style={{ background: "radial-gradient(circle at 20% 0%, oklch(0.85 0.18 96 / 0.35), transparent 55%), radial-gradient(circle at 90% 100%, oklch(0.55 0.15 260 / 0.4), transparent 60%)" }} />
+        <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
+          <div className="relative shrink-0">
+            <div className="h-24 w-24 rounded-2xl bg-primary/20 text-primary flex items-center justify-center font-bold text-3xl overflow-hidden ring-2 ring-primary/40">
+              {p?.avatar_url ? <img src={p.avatar_url} alt="" className="h-full w-full object-cover" /> : avatarInitial}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             </div>
             {isPro && (
               <span className="absolute -bottom-1 -right-1 rounded-full bg-background p-1 shadow-elev-2">
@@ -182,6 +245,7 @@ function ProfilePage() {
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{displayed}</h1>
                   )}
                   {isPro && (
+<<<<<<< HEAD
                     <span
                       className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
                       style={{
@@ -189,11 +253,16 @@ function ProfilePage() {
                         color: "oklch(0.2 0.05 60)",
                       }}
                     >
+=======
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                      style={{ background: "linear-gradient(135deg,var(--gold-2),var(--gold-3))", color: "oklch(0.2 0.05 60)" }}>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                       Pro
                     </span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground mt-0.5">
+<<<<<<< HEAD
                   {p?.username ? (
                     <>@{p.username}</>
                   ) : (
@@ -205,6 +274,13 @@ function ProfilePage() {
                 {p?.bio && (
                   <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap">{p.bio}</p>
                 )}
+=======
+                  {p?.username ? <>@{p.username}</> : <span className="italic">no username yet</span>}
+                  <span className="mx-1.5">·</span>
+                  {me.user.email}
+                </p>
+                {p?.bio && <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap">{p.bio}</p>}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                 <button
                   onClick={() => setEditing(true)}
                   className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border bg-background/60 px-3 py-1.5 text-xs font-medium hover:border-primary/40 transition-colors"
@@ -267,18 +343,26 @@ function ProfilePage() {
           sub={`of 10,000  ·  ${honorPct}%`}
           progress={honorPct}
         />
+<<<<<<< HEAD
         {usageLoading ? (
           <StatCardSkeleton />
         ) : (
+=======
+        {usageLoading ? <StatCardSkeleton /> : (
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           <StatCard
             icon={Zap}
             tone="primary"
             label="AI credits"
             value={usage ? `${usage.remaining}` : "—"}
             sub={`left of ${usage?.limit ?? "—"} · ${plan.name}`}
+<<<<<<< HEAD
             progress={
               usage && usage.limit > 0 ? 100 - Math.round((usage.used / usage.limit) * 100) : 0
             }
+=======
+            progress={usage && usage.limit > 0 ? 100 - Math.round((usage.used / usage.limit) * 100) : 0}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             href="/billing"
           />
         )}
@@ -286,9 +370,13 @@ function ProfilePage() {
 
       {/* ==== Activity grid ==== */}
       <section>
+<<<<<<< HEAD
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
           Activity
         </h2>
+=======
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">Activity</h2>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger">
           {countsLoading ? (
             <>
@@ -299,10 +387,17 @@ function ProfilePage() {
             </>
           ) : (
             <>
+<<<<<<< HEAD
               <MiniStat icon={BookOpenCheck} label="Materials" value={counts?.materials ?? 0} />
               <MiniStat icon={GraduationCap} label="Sets" value={counts?.sets ?? 0} />
               <MiniStat icon={Trophy} label="Exam runs" value={counts?.attempts ?? 0} />
               <MiniStat icon={Heart} label="Posts" value={counts?.posts ?? 0} />
+=======
+              <MiniStat icon={BookOpenCheck} label="Materials"  value={counts?.materials ?? 0} />
+              <MiniStat icon={GraduationCap}  label="Sets"       value={counts?.sets ?? 0} />
+              <MiniStat icon={Trophy}         label="Exam runs"  value={counts?.attempts ?? 0} />
+              <MiniStat icon={Heart}          label="Posts"      value={counts?.posts ?? 0} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             </>
           )}
         </div>
@@ -311,9 +406,13 @@ function ProfilePage() {
       {/* ==== Actions ==== */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
+<<<<<<< HEAD
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Actions
           </h2>
+=======
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</h2>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           <button
             onClick={() => resetOnboarding()}
             className="text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
@@ -322,6 +421,7 @@ function ProfilePage() {
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<<<<<<< HEAD
           <button
             onClick={() => setShowSecurity((v) => !v)}
             className="surface-interactive p-5 group flex items-center gap-4 text-left"
@@ -378,6 +478,50 @@ function ProfilePage() {
               <div className="text-xs text-muted-foreground">End this session on this device</div>
             </div>
           </button>
+=======
+        <button onClick={() => setShowSecurity((v) => !v)} className="surface-interactive p-5 group flex items-center gap-4 text-left">
+          <div className="h-11 w-11 rounded-2xl bg-primary/12 text-primary flex items-center justify-center">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm">Account & security</div>
+            <div className="text-xs text-muted-foreground">Take a break, change password, activity log</div>
+          </div>
+          <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">{showSecurity ? "Hide" : "Open"}</span>
+        </button>
+        <Link to="/settings" className="surface-interactive p-5 group flex items-center gap-4">
+          <div className="h-11 w-11 rounded-2xl bg-primary/12 text-primary flex items-center justify-center">
+            <SettingsIcon className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm">Settings</div>
+            <div className="text-xs text-muted-foreground">Voice, notifications, preferences</div>
+          </div>
+          <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">Open →</span>
+        </Link>
+        <Link to="/billing" className="surface-interactive p-5 group flex items-center gap-4">
+          <div className="h-11 w-11 rounded-2xl bg-primary/12 text-primary flex items-center justify-center">
+            <CreditCard className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm">Billing & plan</div>
+            <div className="text-xs text-muted-foreground">You're on {plan.name}{isPro ? " ✨" : ""}</div>
+          </div>
+          <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">Manage →</span>
+        </Link>
+        <button
+          onClick={logout}
+          className="surface-interactive p-5 group flex items-center gap-4 text-left"
+        >
+          <div className="h-11 w-11 rounded-2xl bg-destructive/15 text-destructive flex items-center justify-center">
+            <LogOut className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-sm">Sign out</div>
+            <div className="text-xs text-muted-foreground">End this session on this device</div>
+          </div>
+        </button>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         </div>
       </section>
 
@@ -414,18 +558,26 @@ function StatCard({
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${toneStyles[tone]}`}>
           <Icon className="h-4 w-4" />
         </div>
+<<<<<<< HEAD
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
+=======
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       </div>
       <div className="mt-3 text-2xl font-bold tracking-tight">{value}</div>
       <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>
       {typeof progress === "number" && (
         <div className="mt-3 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+<<<<<<< HEAD
           <div
             className="h-full bg-primary transition-all duration-700"
             style={{ width: `${progress}%` }}
           />
+=======
+          <div className="h-full bg-primary transition-all duration-700" style={{ width: `${progress}%` }} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         </div>
       )}
     </div>
@@ -434,6 +586,7 @@ function StatCard({
   return Inner;
 }
 
+<<<<<<< HEAD
 function MiniStat({
   icon: Icon,
   label,
@@ -443,6 +596,9 @@ function MiniStat({
   label: string;
   value: number | string;
 }) {
+=======
+function MiniStat({ icon: Icon, label, value }: { icon: typeof UserIcon; label: string; value: number | string }) {
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   return (
     <div className="surface p-4 text-center">
       <Icon className="h-4 w-4 text-primary mx-auto" />
@@ -462,13 +618,24 @@ function SecurityPanel({ email }: { email: string }) {
 
   const { data: events = [] } = useQuery({
     queryKey: ["account-events"],
+<<<<<<< HEAD
     enabled: !!me?.user?.uid,
     queryFn: async () => {
       return await getAccountEvents(me!.user!.uid, 15);
+=======
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("account_events")
+        .select("id,event_type,detail,created_at")
+        .order("created_at", { ascending: false })
+        .limit(15);
+      return data ?? [];
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     },
   });
 
   const logEvent = async (event_type: string, detail?: string) => {
+<<<<<<< HEAD
     const u = auth.currentUser;
     if (!u) return;
     try {
@@ -477,6 +644,17 @@ function SecurityPanel({ email }: { email: string }) {
     } catch (e) {
       // ignore
     }
+=======
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    await supabase.from("account_events").insert({
+      user_id: u.user.id,
+      event_type,
+      detail: detail ?? null,
+      user_agent: navigator.userAgent,
+    });
+    qc.invalidateQueries({ queryKey: ["account-events"] });
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   };
 
   const changePw = async (e: React.FormEvent) => {
@@ -484,6 +662,7 @@ function SecurityPanel({ email }: { email: string }) {
     if (pw.length < 8) return toast.error("Use at least 8 characters");
     if (pw !== pw2) return toast.error("Passwords don't match");
     setChanging(true);
+<<<<<<< HEAD
     let error: Error | null = null;
     try {
       if (auth.currentUser) {
@@ -499,11 +678,19 @@ function SecurityPanel({ email }: { email: string }) {
     toast.success("Password updated");
     setPw("");
     setPw2("");
+=======
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    setChanging(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password updated");
+    setPw(""); setPw2("");
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     await logEvent("password_changed");
   };
 
   const sendReset = async () => {
     if (!email) return;
+<<<<<<< HEAD
     try {
       await sendPasswordResetEmail(auth, email, {
         url: `${window.location.origin}/auth`,
@@ -512,6 +699,13 @@ function SecurityPanel({ email }: { email: string }) {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send reset link");
     }
+=======
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Reset link sent to your email");
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   };
 
   const takeBreak = async () => {
@@ -530,6 +724,7 @@ function SecurityPanel({ email }: { email: string }) {
   return (
     <div className="space-y-4 animate-fade-up">
       <section className="glass p-6">
+<<<<<<< HEAD
         <h2 className="text-[13px] font-semibold flex items-center gap-2">
           <Coffee className="h-4 w-4 text-primary" /> Take a break
         </h2>
@@ -553,12 +748,23 @@ function SecurityPanel({ email }: { email: string }) {
             disabled={taking}
             className="ripple rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-semibold hover:shadow-glow disabled:opacity-50"
           >
+=======
+        <h2 className="text-[13px] font-semibold flex items-center gap-2"><Coffee className="h-4 w-4 text-primary" /> Take a break</h2>
+        <p className="mt-1 text-xs text-muted-foreground">Pause streaks and notifications for a while. Your data stays safe.</p>
+        <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-end">
+          <label className="text-[11px] font-medium text-muted-foreground flex-1">
+            Duration ({breakDays} days)
+            <input type="range" min={1} max={30} value={breakDays} onChange={(e) => setBreakDays(Number(e.target.value))} className="mt-2 w-full accent-[var(--color-primary)]" />
+          </label>
+          <button onClick={takeBreak} disabled={taking} className="ripple rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-semibold hover:shadow-glow disabled:opacity-50">
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             {taking && <Loader2 className="inline h-4 w-4 mr-1 animate-spin" />} Start break
           </button>
         </div>
       </section>
 
       <section className="glass p-6">
+<<<<<<< HEAD
         <h2 className="text-[13px] font-semibold flex items-center gap-2">
           <KeyRound className="h-4 w-4 text-primary" /> Change password
         </h2>
@@ -591,14 +797,31 @@ function SecurityPanel({ email }: { email: string }) {
           onClick={sendReset}
           className="mt-3 text-[11px] text-primary hover:underline inline-flex items-center gap-1"
         >
+=======
+        <h2 className="text-[13px] font-semibold flex items-center gap-2"><KeyRound className="h-4 w-4 text-primary" /> Change password</h2>
+        <form onSubmit={changePw} className="mt-4 grid sm:grid-cols-2 gap-3">
+          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="New password" autoComplete="new-password"
+            className="rounded-xl border border-input bg-background/60 px-3 py-2 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-ring/40" />
+          <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Confirm password" autoComplete="new-password"
+            className="rounded-xl border border-input bg-background/60 px-3 py-2 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-ring/40" />
+          <button type="submit" disabled={changing} className="sm:col-span-2 ripple rounded-full bg-primary text-primary-foreground px-4 py-2 text-xs font-semibold hover:shadow-glow disabled:opacity-50">
+            {changing && <Loader2 className="inline h-4 w-4 mr-1 animate-spin" />} Update password
+          </button>
+        </form>
+        <button onClick={sendReset} className="mt-3 text-[11px] text-primary hover:underline inline-flex items-center gap-1">
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           <Mail className="h-3.5 w-3.5" /> Email me a reset link instead
         </button>
       </section>
 
       <section className="glass p-6">
+<<<<<<< HEAD
         <h2 className="text-[13px] font-semibold flex items-center gap-2">
           <History className="h-4 w-4 text-primary" /> Account activity
         </h2>
+=======
+        <h2 className="text-[13px] font-semibold flex items-center gap-2"><History className="h-4 w-4 text-primary" /> Account activity</h2>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         {events.length === 0 ? (
           <div className="mt-3 text-xs text-muted-foreground">No events yet.</div>
         ) : (
@@ -609,9 +832,13 @@ function SecurityPanel({ email }: { email: string }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium">{formatEvent(e.event_type)}</div>
                   {e.detail && <div className="text-[11px] text-muted-foreground">{e.detail}</div>}
+<<<<<<< HEAD
                   <div className="text-[10px] text-muted-foreground mt-0.5">
                     {new Date(e.created_at).toLocaleString()}
                   </div>
+=======
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{new Date(e.created_at).toLocaleString()}</div>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                 </div>
               </li>
             ))}
@@ -620,6 +847,7 @@ function SecurityPanel({ email }: { email: string }) {
       </section>
 
       <section className="rounded-[22px] border border-destructive/30 bg-destructive/5 p-6 backdrop-blur">
+<<<<<<< HEAD
         <h2 className="text-[13px] font-semibold flex items-center gap-2 text-destructive">
           <AlertTriangle className="h-4 w-4" /> Danger zone
         </h2>
@@ -630,6 +858,11 @@ function SecurityPanel({ email }: { email: string }) {
           onClick={deleteAccount}
           className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-destructive/40 bg-background px-3 py-1.5 text-[11px] font-medium text-destructive hover:bg-destructive/10"
         >
+=======
+        <h2 className="text-[13px] font-semibold flex items-center gap-2 text-destructive"><AlertTriangle className="h-4 w-4" /> Danger zone</h2>
+        <p className="mt-1 text-xs text-muted-foreground">Request account deletion. Contents will be permanently removed.</p>
+        <button onClick={deleteAccount} className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-destructive/40 bg-background px-3 py-1.5 text-[11px] font-medium text-destructive hover:bg-destructive/10">
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           <Trash2 className="h-3.5 w-3.5" /> Request deletion
         </button>
       </section>
@@ -645,4 +878,8 @@ function formatEvent(t: string) {
     login: "Signed in",
   };
   return map[t] ?? t.replace(/_/g, " ");
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132

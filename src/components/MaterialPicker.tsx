@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+<<<<<<< HEAD
 import { auth } from "@/lib/firebase";
 import { getMaterials } from "@/lib/firestore-db";
+=======
+import { supabase } from "@/integrations/supabase/client";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import { BookOpen, FileText, GraduationCap, Search, Loader2 } from "lucide-react";
 
 const TYPE_META = {
@@ -31,12 +35,22 @@ export function MaterialPicker({
   const [q, setQ] = useState("");
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["materials-all"],
+<<<<<<< HEAD
     enabled: !!auth.currentUser?.uid,
     queryFn: async () => {
       const notes = await getMaterials(auth.currentUser!.uid, "notes");
       const homework = await getMaterials(auth.currentUser!.uid, "homework");
       const exam = await getMaterials(auth.currentUser!.uid, "exam");
       return [...notes, ...homework, ...exam] as PickerMaterial[];
+=======
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("materials")
+        .select("id,title,subject,type,file_name,mime_type")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as PickerMaterial[];
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     },
   });
 
@@ -94,9 +108,13 @@ export function MaterialPicker({
                 }`}
               >
                 <div className="flex items-start gap-3">
+<<<<<<< HEAD
                   <div
                     className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 ${active ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary"}`}
                   >
+=======
+                  <div className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 ${active ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary"}`}>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
@@ -114,4 +132,8 @@ export function MaterialPicker({
       </ul>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132

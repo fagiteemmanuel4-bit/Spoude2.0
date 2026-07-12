@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { Sparkles, Home, Plus, Moon, User, ArrowRight, X } from "lucide-react";
+<<<<<<< HEAD
+=======
+import { SpoudeMark } from "@/components/Logo";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 
 const KEY = "lumio-onboarding-v1";
 
 export function shouldRunOnboarding(): boolean {
   if (typeof window === "undefined") return false;
+<<<<<<< HEAD
   try {
     return localStorage.getItem(KEY) !== "done";
   } catch (e) {
@@ -21,6 +26,13 @@ export function resetOnboarding() {
   } catch (e) {
     void e;
   }
+=======
+  try { return localStorage.getItem(KEY) !== "done"; } catch { return true; }
+}
+
+export function resetOnboarding() {
+  try { localStorage.removeItem(KEY); } catch {}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   window.dispatchEvent(new Event("lumio:onboarding:replay"));
 }
 
@@ -36,11 +48,15 @@ export function Onboarding() {
   }, []);
 
   const finish = () => {
+<<<<<<< HEAD
     try {
       localStorage.setItem(KEY, "done");
     } catch (e) {
       void e;
     }
+=======
+    try { localStorage.setItem(KEY, "done"); } catch {}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     setOpen(false);
     setShowTips(true);
     // auto-dismiss tips after 12s so we don't nag
@@ -78,6 +94,7 @@ function WelcomeModal({ onDone, onSkip }: { onDone: () => void; onSkip: () => vo
           <X className="h-4 w-4" />
         </button>
 
+<<<<<<< HEAD
         <div className="mb-4">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
             Welcome to
@@ -123,6 +140,30 @@ function WelcomeModal({ onDone, onSkip }: { onDone: () => void; onSkip: () => vo
             title="Your profile"
             desc="Honor score, streak, credits and account controls live under Profile."
           />
+=======
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-2xl bg-primary/30 blur-lg animate-shimmer" />
+            <div className="relative h-11 w-11 rounded-2xl bg-primary/12 flex items-center justify-center">
+              <SpoudeMark size={22} />
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Welcome to</p>
+            <h2 className="text-lg font-semibold tracking-tight">Lumio</h2>
+          </div>
+        </div>
+
+        <p className="text-[13px] text-muted-foreground leading-relaxed">
+          Your study, illuminated. Here's what to know in 20 seconds — three things you'll use every day.
+        </p>
+
+        <ul className="mt-5 space-y-3">
+          <Row icon={Home} tone="primary" title="Home hub" desc="Progress, jump-in tiles, and recent activity — all in one place." />
+          <Row icon={Plus} tone="violet" title="Bottom nav +" desc="Tap the glowing plus to reach Library, Study, Exams and Billing." />
+          <Row icon={Moon} tone="gold" title="Light or dark" desc="Toggle any time from the top bar. Your choice is remembered." />
+          <Row icon={User} tone="emerald" title="Your profile" desc="Honor score, streak, credits and account controls live under Profile." />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         </ul>
 
         <div className="mt-6 flex items-center justify-between gap-3">
@@ -156,6 +197,7 @@ function WelcomeModal({ onDone, onSkip }: { onDone: () => void; onSkip: () => vo
 }
 
 function Row({
+<<<<<<< HEAD
   icon: Icon,
   tone,
   title,
@@ -165,6 +207,13 @@ function Row({
   tone: "primary" | "gold" | "violet" | "emerald";
   title: string;
   desc: string;
+=======
+  icon: Icon, tone, title, desc,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "primary" | "gold" | "violet" | "emerald";
+  title: string; desc: string;
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 }) {
   const toneCls: Record<string, string> = {
     primary: "bg-primary/12 text-primary",
@@ -174,9 +223,13 @@ function Row({
   };
   return (
     <li className="flex items-start gap-3">
+<<<<<<< HEAD
       <div
         className={`h-9 w-9 rounded-2xl flex items-center justify-center shrink-0 ${toneCls[tone]}`}
       >
+=======
+      <div className={`h-9 w-9 rounded-2xl flex items-center justify-center shrink-0 ${toneCls[tone]}`}>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">

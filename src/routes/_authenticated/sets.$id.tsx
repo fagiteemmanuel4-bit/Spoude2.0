@@ -1,8 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+<<<<<<< HEAD
 import { auth } from "@/lib/firebase";
 import { getStudySet, addAttempt } from "@/lib/firestore-db";
+=======
+import { supabase } from "@/integrations/supabase/client";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,7 +27,11 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/sets/$id")({
+<<<<<<< HEAD
   head: () => ({ meta: [{ title: "Spoude" }] }),
+=======
+  head: () => ({ meta: [{ title: "Lumio" }] }),
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   component: SetPlayPage,
 });
 
@@ -43,8 +51,17 @@ function SetPlayPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["set", id],
     queryFn: async () => {
+<<<<<<< HEAD
       const data = await getStudySet(id);
       if (!data) throw new Error("Not found");
+=======
+      const { data, error } = await supabase
+        .from("study_sets")
+        .select("id,kind,title,subject,questions,time_limit_minutes,ai_generated")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       return data as unknown as SetRow;
     },
   });
@@ -59,7 +76,11 @@ function SetPlayPage() {
     return (
       <div className="surface p-10 text-center text-sm text-muted-foreground">
         Couldn't load this set.{" "}
+<<<<<<< HEAD
         <Link to="/spoude" className="text-primary hover:underline">
+=======
+        <Link to="/lumio" className="text-primary hover:underline">
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           Go back
         </Link>
       </div>
@@ -84,20 +105,28 @@ function ExamShell({ set }: { set: SetRow }) {
   const enterFs = async () => {
     const el = containerRef.current;
     if (el?.requestFullscreen) {
+<<<<<<< HEAD
       try {
         await el.requestFullscreen();
       } catch {
         /* ignored */
       }
+=======
+      try { await el.requestFullscreen(); } catch { /* ignored */ }
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     }
   };
   const exitFs = async () => {
     if (document.fullscreenElement) {
+<<<<<<< HEAD
       try {
         await document.exitFullscreen();
       } catch {
         /* ignored */
       }
+=======
+      try { await document.exitFullscreen(); } catch { /* ignored */ }
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     }
   };
 
@@ -118,6 +147,7 @@ function ExamShell({ set }: { set: SetRow }) {
                 <BookOpen className="h-5 w-5" />
               </div>
               <div>
+<<<<<<< HEAD
                 <div className="text-[10px] uppercase tracking-widest text-primary font-semibold">
                   Exam
                 </div>
@@ -125,12 +155,18 @@ function ExamShell({ set }: { set: SetRow }) {
                 {set.subject && (
                   <p className="text-sm text-muted-foreground mt-0.5">{set.subject}</p>
                 )}
+=======
+                <div className="text-[10px] uppercase tracking-widest text-primary font-semibold">Exam</div>
+                <h1 className="text-2xl font-bold tracking-tight leading-tight">{set.title}</h1>
+                {set.subject && <p className="text-sm text-muted-foreground mt-0.5">{set.subject}</p>}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
               </div>
             </div>
           </div>
           <div className="p-6 space-y-5">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-border bg-card p-4">
+<<<<<<< HEAD
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Questions
                 </div>
@@ -140,6 +176,13 @@ function ExamShell({ set }: { set: SetRow }) {
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Time limit
                 </div>
+=======
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Questions</div>
+                <div className="mt-1 text-2xl font-bold">{set.questions.length}</div>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Time limit</div>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                 <div className="mt-1 text-2xl font-bold flex items-center gap-1.5">
                   <Timer className="h-5 w-5 text-primary" /> {mins} min
                 </div>
@@ -150,10 +193,14 @@ function ExamShell({ set }: { set: SetRow }) {
               <div className="text-sm text-foreground/80 space-y-1.5">
                 <p className="font-medium">Before you start:</p>
                 <ul className="text-xs list-disc pl-4 space-y-0.5 text-muted-foreground">
+<<<<<<< HEAD
                   <li>
                     The exam will open in fullscreen. Stay focused — leaving fullscreen won't
                     submit, but it breaks concentration.
                   </li>
+=======
+                  <li>The exam will open in fullscreen. Stay focused — leaving fullscreen won't submit, but it breaks concentration.</li>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                   <li>The timer auto-submits your exam when it runs out.</li>
                   <li>You can navigate freely between questions with the palette on the right.</li>
                 </ul>
@@ -183,6 +230,7 @@ function ExamShell({ set }: { set: SetRow }) {
             className="ripple inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 transition-colors"
             aria-label={isFs ? "Exit fullscreen" : "Enter fullscreen"}
           >
+<<<<<<< HEAD
             {isFs ? (
               <>
                 <Minimize2 className="h-3.5 w-3.5" /> Exit fullscreen
@@ -192,6 +240,9 @@ function ExamShell({ set }: { set: SetRow }) {
                 <Maximize2 className="h-3.5 w-3.5" /> Fullscreen
               </>
             )}
+=======
+            {isFs ? <><Minimize2 className="h-3.5 w-3.5" /> Exit fullscreen</> : <><Maximize2 className="h-3.5 w-3.5" /> Fullscreen</>}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           </button>
         </div>
         <QuizPlayer set={set} onExit={exitFs} />
@@ -312,21 +363,32 @@ function QuizPlayer({ set, onExit }: { set: SetRow; onExit?: () => void }) {
   }, [timed, submitted]);
 
   const score = useMemo(
+<<<<<<< HEAD
     () =>
       answers.reduce(
         (acc, a, idx) => acc + (a !== null && a === set.questions[idx].answer ? 1 : 0),
         0,
       ),
+=======
+    () => answers.reduce((acc, a, idx) => acc + (a !== null && a === set.questions[idx].answer ? 1 : 0), 0),
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     [answers, set.questions],
   );
 
   async function finalize() {
     if (submitted) return;
     setSubmitted(true);
+<<<<<<< HEAD
     const u = auth.currentUser;
     if (u) {
       await addAttempt({
         user_id: u.uid,
+=======
+    const { data: u } = await supabase.auth.getUser();
+    if (u.user) {
+      await supabase.from("attempts").insert({
+        user_id: u.user.id,
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         set_id: set.id,
         score,
         total,
@@ -392,9 +454,13 @@ function QuizPlayer({ set, onExit }: { set: SetRow; onExit?: () => void }) {
                       </div>
                     )}
                     {q.explanation && (
+<<<<<<< HEAD
                       <div className="mt-2 text-xs text-muted-foreground italic">
                         {q.explanation}
                       </div>
+=======
+                      <div className="mt-2 text-xs text-muted-foreground italic">{q.explanation}</div>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                     )}
                   </div>
                 </div>
@@ -444,7 +510,13 @@ function QuizPlayer({ set, onExit }: { set: SetRow; onExit?: () => void }) {
             return (
               <button
                 key={c}
+<<<<<<< HEAD
                 onClick={() => setAnswers((xs) => xs.map((v, idx) => (idx === i ? c : v)))}
+=======
+                onClick={() =>
+                  setAnswers((xs) => xs.map((v, idx) => (idx === i ? c : v)))
+                }
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                 className={`text-left rounded-lg border px-4 py-3 text-sm transition-all ${
                   active
                     ? "border-primary bg-primary-soft shadow-elev-1"
@@ -469,8 +541,12 @@ function QuizPlayer({ set, onExit }: { set: SetRow; onExit?: () => void }) {
         {i === total - 1 ? (
           <button
             onClick={() => {
+<<<<<<< HEAD
               if (answers.some((a) => a === null) && !confirm("Submit with unanswered questions?"))
                 return;
+=======
+              if (answers.some((a) => a === null) && !confirm("Submit with unanswered questions?")) return;
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
               finalize().catch((e) => toast.error(e instanceof Error ? e.message : "Failed"));
             }}
             className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:shadow-glow transition-all"

@@ -1,7 +1,18 @@
 import { cn } from "@/lib/utils";
 
 export function Skel({ className }: { className?: string }) {
+<<<<<<< HEAD
   return <div className={cn("skeleton-shimmer rounded-md", className)} />;
+=======
+  return (
+    <div
+      className={cn(
+        "skeleton-shimmer rounded-md",
+        className,
+      )}
+    />
+  );
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 }
 
 export function MetricSkeleton() {
@@ -104,4 +115,8 @@ export function EmptyState({
       {action && <div className="mt-1">{action}</div>}
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
+<<<<<<< HEAD
 import { auth } from "@/lib/firebase";
 import { getMaterials, updateMaterial, deleteMaterial } from "@/lib/firestore-db";
 import {
@@ -22,16 +23,32 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { UploadDialog } from "@/components/UploadDialog";
+=======
+import { supabase } from "@/integrations/supabase/client";
+import {
+  BookOpen, FileText, GraduationCap, Download, Trash2, Loader2, Search,
+  Upload as UploadIcon, Pin, PinOff, Globe, Lock as LockIcon, Copy, X,
+  Library as LibraryIcon,
+} from "lucide-react";
+import { toast } from "sonner";
+import { UploadDialog } from "@/components/UploadDialog";
+import { LibrarySearchModal, type LibrarySearchMaterial } from "@/components/LibrarySearchModal";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 
 const searchSchema = z.object({ type: z.enum(["notes", "homework", "exam"]).optional() });
 
 export const Route = createFileRoute("/_authenticated/library")({
+<<<<<<< HEAD
   head: () => ({ meta: [{ title: "Library — Spoude" }] }),
+=======
+  head: () => ({ meta: [{ title: "Library — Lumio" }] }),
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   validateSearch: searchSchema,
   component: Library,
 });
 
 const TABS = [
+<<<<<<< HEAD
   {
     id: "notes",
     label: "Class notes",
@@ -50,6 +67,11 @@ const TABS = [
     icon: GraduationCap,
     spineTint: "from-violet-300/40 to-violet-500/10",
   },
+=======
+  { id: "notes", label: "Class notes", icon: BookOpen, spineTint: "from-amber-300/40 to-amber-500/10" },
+  { id: "homework", label: "Homework", icon: FileText, spineTint: "from-emerald-300/40 to-emerald-500/10" },
+  { id: "exam", label: "Past exams", icon: GraduationCap, spineTint: "from-violet-300/40 to-violet-500/10" },
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 ] as const;
 
 type Material = {
@@ -75,13 +97,30 @@ function Library() {
   const activeType = search.type ?? "notes";
   const [query, setQuery] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
+<<<<<<< HEAD
+=======
+  const [searchOpen, setSearchOpen] = useState(false);
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   const [menu, setMenu] = useState<{ material: Material; x: number; y: number } | null>(null);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["materials", activeType],
+<<<<<<< HEAD
     enabled: !!auth.currentUser?.uid,
     queryFn: async () => {
       return (await getMaterials(auth.currentUser!.uid, activeType)) as Material[];
+=======
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("materials")
+        .select("*")
+        .eq("type", activeType)
+        .order("is_pinned", { ascending: false })
+        .order("pinned_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Material[];
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     },
   });
 
@@ -99,6 +138,7 @@ function Library() {
   const rest = filtered.filter((m) => !m.is_pinned);
 
   const download = async (m: Material) => {
+<<<<<<< HEAD
     // For Firebase Cloud Storage, we can use getDownloadURL from client SDK (which is public by design or standard rules)
     // or simulate signed url by getting current download url.
     // Let's import getDownloadURL from firebase/storage
@@ -111,10 +151,16 @@ function Library() {
     } catch (err) {
       toast.error("Could not generate download link");
     }
+=======
+    const { data, error } = await supabase.storage.from("materials").createSignedUrl(m.storage_path, 60);
+    if (error || !data) { toast.error("Could not generate download link"); return; }
+    window.open(data.signedUrl, "_blank");
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   };
 
   const togglePin = async (m: Material) => {
     const next = !m.is_pinned;
+<<<<<<< HEAD
     try {
       await updateMaterial(m.id, {
         is_pinned: next,
@@ -125,10 +171,20 @@ function Library() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to toggle pin");
     }
+=======
+    const { error } = await supabase
+      .from("materials")
+      .update({ is_pinned: next, pinned_at: next ? new Date().toISOString() : null })
+      .eq("id", m.id);
+    if (error) return toast.error(error.message);
+    toast.success(next ? "Pinned to top" : "Unpinned");
+    qc.invalidateQueries({ queryKey: ["materials"] });
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   };
 
   const togglePublic = async (m: Material) => {
     const next = !m.is_public;
+<<<<<<< HEAD
     try {
       await updateMaterial(m.id, { is_public: next });
       toast.success(next ? "Now public — anyone with the link can view" : "Set back to private");
@@ -150,10 +206,24 @@ function Library() {
     } catch {
       toast.error("Could not copy link");
     }
+=======
+    const { error } = await supabase.from("materials").update({ is_public: next }).eq("id", m.id);
+    if (error) return toast.error(error.message);
+    toast.success(next ? "Now public — anyone with the link can view" : "Set back to private");
+    qc.invalidateQueries({ queryKey: ["materials"] });
+  };
+
+  const copyPublicLink = async (m: Material) => {
+    if (!m.is_public) { toast.error("Turn on public first"); return; }
+    const url = `${window.location.origin}/library?type=${m.type}#m=${m.id}`;
+    try { await navigator.clipboard.writeText(url); toast.success("Link copied"); }
+    catch { toast.error("Could not copy link"); }
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   };
 
   const remove = async (m: Material) => {
     if (!confirm(`Delete "${m.title}"?`)) return;
+<<<<<<< HEAD
     try {
       const { ref, deleteObject } = await import("firebase/storage");
       const { storage } = await import("@/lib/firebase");
@@ -166,6 +236,14 @@ function Library() {
     } catch (error) {
       toast.error("Could not delete");
     }
+=======
+    const { error: sErr } = await supabase.storage.from("materials").remove([m.storage_path]);
+    const { error } = await supabase.from("materials").delete().eq("id", m.id);
+    if (error || sErr) { toast.error("Could not delete"); return; }
+    toast.success("Deleted");
+    qc.invalidateQueries({ queryKey: ["materials"] });
+    qc.invalidateQueries({ queryKey: ["materials-stats"] });
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   };
 
   return (
@@ -173,6 +251,7 @@ function Library() {
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Library</h1>
+<<<<<<< HEAD
           <p className="mt-1 text-sm text-muted-foreground">
             Your bookshelf — tap and hold a book for more.
           </p>
@@ -188,6 +267,24 @@ function Library() {
             />
           </div>
           <button
+=======
+          <p className="mt-1 text-sm text-muted-foreground">Your bookshelf — tap and hold a book for more.</p>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 rounded-full border border-input bg-card px-3 py-2 flex-1 sm:w-64 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40 transition-all">
+            <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search this shelf…" className="w-full bg-transparent outline-none text-sm" />
+          </div>
+          <button
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search your whole library"
+            title="Search your whole library"
+            className="shrink-0 h-9 w-9 rounded-full border border-input bg-card flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+          >
+            <LibraryIcon className="h-4 w-4" />
+          </button>
+          <button
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             onClick={() => setUploadOpen(true)}
             className="ripple inline-flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-4 py-2 text-sm font-semibold shadow-elev-1 hover:shadow-glow transition-all"
           >
@@ -197,6 +294,17 @@ function Library() {
       </header>
 
       {uploadOpen && <UploadDialog defaultType={activeType} onClose={() => setUploadOpen(false)} />}
+<<<<<<< HEAD
+=======
+      <LibrarySearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelect={(m: LibrarySearchMaterial) => {
+          setSearchOpen(false);
+          navigate({ search: { type: m.type } });
+        }}
+      />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 
       {/* Shelf tabs */}
       <div className="flex gap-2 border-b border-border">
@@ -210,9 +318,13 @@ function Library() {
             >
               <Icon className="h-4 w-4" />
               {label}
+<<<<<<< HEAD
               <span
                 className={`absolute left-3 right-3 -bottom-px h-0.5 rounded-full bg-primary transition-transform duration-300 origin-left ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`}
               />
+=======
+              <span className={`absolute left-3 right-3 -bottom-px h-0.5 rounded-full bg-primary transition-transform duration-300 origin-left ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             </button>
           );
         })}
@@ -226,6 +338,7 @@ function Library() {
         <>
           {pinned.length > 0 && (
             <ShelfSection title="Pinned" count={pinned.length}>
+<<<<<<< HEAD
               <Bookshelf
                 items={pinned}
                 onOpenMenu={setMenu}
@@ -241,6 +354,13 @@ function Library() {
               onTogglePin={togglePin}
               activeType={activeType}
             />
+=======
+              <Bookshelf items={pinned} onOpenMenu={setMenu} onTogglePin={togglePin} activeType={activeType} />
+            </ShelfSection>
+          )}
+          <ShelfSection title={pinned.length ? "All books" : "Your shelf"} count={rest.length}>
+            <Bookshelf items={rest} onOpenMenu={setMenu} onTogglePin={togglePin} activeType={activeType} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           </ShelfSection>
         </>
       )}
@@ -251,6 +371,7 @@ function Library() {
           x={menu.x}
           y={menu.y}
           onClose={() => setMenu(null)}
+<<<<<<< HEAD
           onDownload={() => {
             download(menu.material);
             setMenu(null);
@@ -271,12 +392,20 @@ function Library() {
             copyPublicLink(menu.material);
             setMenu(null);
           }}
+=======
+          onDownload={() => { download(menu.material); setMenu(null); }}
+          onDelete={() => { remove(menu.material); setMenu(null); }}
+          onTogglePin={() => { togglePin(menu.material); setMenu(null); }}
+          onTogglePublic={() => { togglePublic(menu.material); setMenu(null); }}
+          onCopyLink={() => { copyPublicLink(menu.material); setMenu(null); }}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         />
       )}
     </div>
   );
 }
 
+<<<<<<< HEAD
 function ShelfSection({
   title,
   count,
@@ -295,6 +424,14 @@ function ShelfSection({
         <span className="text-[11px] text-muted-foreground">
           {count} {count === 1 ? "book" : "books"}
         </span>
+=======
+function ShelfSection({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
+  return (
+    <section>
+      <div className="flex items-baseline justify-between mb-3 px-1">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{title}</h2>
+        <span className="text-[11px] text-muted-foreground">{count} {count === 1 ? "book" : "books"}</span>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       </div>
       {children}
     </section>
@@ -305,10 +442,14 @@ function ShelfSection({
  * Wooden-shelf style grid. Each row of books sits on a subtle shelf-plank.
  */
 function Bookshelf({
+<<<<<<< HEAD
   items,
   onOpenMenu,
   onTogglePin,
   activeType,
+=======
+  items, onOpenMenu, onTogglePin, activeType,
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 }: {
   items: Material[];
   onOpenMenu: (v: { material: Material; x: number; y: number }) => void;
@@ -320,6 +461,7 @@ function Bookshelf({
     <div className="relative">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
         {items.map((m) => (
+<<<<<<< HEAD
           <BookCard
             key={m.id}
             m={m}
@@ -327,6 +469,9 @@ function Bookshelf({
             onOpenMenu={onOpenMenu}
             onTogglePin={onTogglePin}
           />
+=======
+          <BookCard key={m.id} m={m} tint={tint} onOpenMenu={onOpenMenu} onTogglePin={onTogglePin} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         ))}
       </div>
     </div>
@@ -334,10 +479,14 @@ function Bookshelf({
 }
 
 function BookCard({
+<<<<<<< HEAD
   m,
   tint,
   onOpenMenu,
   onTogglePin,
+=======
+  m, tint, onOpenMenu, onTogglePin,
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 }: {
   m: Material;
   tint: string;
@@ -358,12 +507,16 @@ function BookCard({
       openMenuAt(touch.clientX, touch.clientY);
     }, 450);
   };
+<<<<<<< HEAD
   const clearPress = () => {
     if (pressTimer.current) {
       clearTimeout(pressTimer.current);
       pressTimer.current = null;
     }
   };
+=======
+  const clearPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 
   const onContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -399,9 +552,13 @@ function BookCard({
                 </span>
               )}
               <div className="flex flex-col items-end gap-1">
+<<<<<<< HEAD
                 {m.is_pinned && (
                   <Pin className="h-3 w-3 text-primary drop-shadow" fill="currentColor" />
                 )}
+=======
+                {m.is_pinned && <Pin className="h-3 w-3 text-primary drop-shadow" fill="currentColor" />}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                 {m.is_public && <Globe className="h-3 w-3 text-emerald-500" />}
               </div>
             </div>
@@ -417,10 +574,14 @@ function BookCard({
         </div>
         {/* Pin quick action (visible on hover for desktop) */}
         <button
+<<<<<<< HEAD
           onClick={(e) => {
             e.stopPropagation();
             onTogglePin(m);
           }}
+=======
+          onClick={(e) => { e.stopPropagation(); onTogglePin(m); }}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           aria-label={m.is_pinned ? "Unpin" : "Pin"}
           className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-popover border border-border shadow-elev-1 opacity-0 group-hover:opacity-100 hover:opacity-100 hidden sm:flex items-center justify-center text-muted-foreground hover:text-primary transition-all"
         >
@@ -434,8 +595,12 @@ function BookCard({
         style={{
           background:
             "linear-gradient(to bottom, color-mix(in oklch, var(--color-foreground) 18%, transparent), color-mix(in oklch, var(--color-foreground) 4%, transparent))",
+<<<<<<< HEAD
           boxShadow:
             "0 6px 12px -6px color-mix(in oklch, var(--color-foreground) 30%, transparent)",
+=======
+          boxShadow: "0 6px 12px -6px color-mix(in oklch, var(--color-foreground) 30%, transparent)",
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         }}
       />
     </div>
@@ -443,6 +608,7 @@ function BookCard({
 }
 
 function ContextMenu({
+<<<<<<< HEAD
   material: m,
   x,
   y,
@@ -477,6 +643,22 @@ function ContextMenu({
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
+=======
+  material: m, x, y, onClose, onDownload, onDelete, onTogglePin, onTogglePublic, onCopyLink,
+}: {
+  material: Material; x: number; y: number;
+  onClose: () => void;
+  onDownload: () => void; onDelete: () => void;
+  onTogglePin: () => void; onTogglePublic: () => void; onCopyLink: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   }, [onClose]);
 
   // Clamp position so menu never overflows viewport (mobile long-press)
@@ -487,10 +669,14 @@ function ContextMenu({
 
   return (
     <>
+<<<<<<< HEAD
       <div
         className="fixed inset-0 z-[70] bg-foreground/30 backdrop-blur-sm animate-fade-up"
         onClick={onClose}
       />
+=======
+      <div className="fixed inset-0 z-[70] bg-foreground/30 backdrop-blur-sm animate-fade-up" onClick={onClose} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       <div
         ref={ref}
         className="fixed z-[80] w-60 rounded-2xl border border-border shadow-elev-3 overflow-hidden animate-fade-up"
@@ -501,6 +687,7 @@ function ContextMenu({
             <div className="text-[12px] font-semibold truncate">{m.title}</div>
             <div className="text-[10px] text-muted-foreground truncate">{m.file_name}</div>
           </div>
+<<<<<<< HEAD
           <button
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground p-0.5"
@@ -514,6 +701,13 @@ function ContextMenu({
           label={m.is_pinned ? "Unpin" : "Pin to top"}
           onClick={onTogglePin}
         />
+=======
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-0.5" aria-label="Close">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <MenuItem icon={m.is_pinned ? PinOff : Pin} label={m.is_pinned ? "Unpin" : "Pin to top"} onClick={onTogglePin} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         <MenuItem icon={Download} label="Download" onClick={onDownload} />
         <MenuItem
           icon={m.is_public ? LockIcon : Globe}
@@ -521,7 +715,13 @@ function ContextMenu({
           hint={m.is_public ? "Anyone can view" : "Share with anyone"}
           onClick={onTogglePublic}
         />
+<<<<<<< HEAD
         {m.is_public && <MenuItem icon={Copy} label="Copy public link" onClick={onCopyLink} />}
+=======
+        {m.is_public && (
+          <MenuItem icon={Copy} label="Copy public link" onClick={onCopyLink} />
+        )}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         <div className="h-px bg-border/70" />
         <MenuItem icon={Trash2} label="Delete" danger onClick={onDelete} />
       </div>
@@ -530,6 +730,7 @@ function ContextMenu({
 }
 
 function MenuItem({
+<<<<<<< HEAD
   icon: Icon,
   label,
   hint,
@@ -541,14 +742,24 @@ function MenuItem({
   hint?: string;
   onClick: () => void;
   danger?: boolean;
+=======
+  icon: Icon, label, hint, onClick, danger,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; hint?: string; onClick: () => void; danger?: boolean;
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 }) {
   return (
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-left transition-colors ${
+<<<<<<< HEAD
         danger
           ? "text-destructive hover:bg-destructive/10"
           : "text-foreground hover:bg-sidebar-accent"
+=======
+        danger ? "text-destructive hover:bg-destructive/10" : "text-foreground hover:bg-sidebar-accent"
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -563,6 +774,7 @@ function MenuItem({
 function EmptyShelf({ onUpload, query }: { onUpload: () => void; query: string }) {
   return (
     <div className="relative rounded-3xl border border-dashed border-border p-10 text-center overflow-hidden">
+<<<<<<< HEAD
       <div
         aria-hidden
         className="absolute inset-0 opacity-40"
@@ -572,6 +784,12 @@ function EmptyShelf({ onUpload, query }: { onUpload: () => void; query: string }
           maskImage: "linear-gradient(to bottom, black, transparent)",
         }}
       />
+=======
+      <div aria-hidden className="absolute inset-0 opacity-40" style={{
+        backgroundImage: "repeating-linear-gradient(90deg, color-mix(in oklch, var(--color-foreground) 6%, transparent) 0 2px, transparent 2px 22px)",
+        maskImage: "linear-gradient(to bottom, black, transparent)",
+      }} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       <div className="relative">
         <div className="mx-auto h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
           <BookOpen className="h-6 w-6 text-primary" />
@@ -580,9 +798,13 @@ function EmptyShelf({ onUpload, query }: { onUpload: () => void; query: string }
           {query ? "No matches" : "This shelf is empty"}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
+<<<<<<< HEAD
           {query
             ? "Try a different search."
             : "Upload a document to place the first book on the shelf."}
+=======
+          {query ? "Try a different search." : "Upload a document to place the first book on the shelf."}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         </p>
         {!query && (
           <button

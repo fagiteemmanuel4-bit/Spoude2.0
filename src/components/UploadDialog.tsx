@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+<<<<<<< HEAD
 import { auth, storage } from "@/lib/firebase";
 import { ref, uploadBytes } from "firebase/storage";
 import { addMaterial } from "@/lib/firestore-db";
+=======
+import { supabase } from "@/integrations/supabase/client";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import { toast } from "sonner";
 import { Upload as UploadIcon, Loader2, X, BookOpen, FileText, GraduationCap } from "lucide-react";
 
@@ -37,6 +41,7 @@ export function UploadDialog({
     if (file.size > MAX_SIZE) return toast.error("File must be under 25 MB");
     setBusy(true);
     try {
+<<<<<<< HEAD
       const u = auth.currentUser;
       if (!u) throw new Error("Not signed in");
       const safe = file.name.replace(/[^\w.-]+/g, "_");
@@ -47,6 +52,20 @@ export function UploadDialog({
 
       await addMaterial({
         user_id: u.uid,
+=======
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Not signed in");
+      const safe = file.name.replace(/[^\w.\-]+/g, "_");
+      const path = `${u.user.id}/${type}/${Date.now()}-${safe}`;
+      const { error: upErr } = await supabase.storage.from("materials").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (upErr) throw upErr;
+      const { error: insErr } = await supabase.from("materials").insert({
+        user_id: u.user.id,
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         title: title.trim().slice(0, 120),
         subject: subject.trim() || null,
         type,
@@ -54,9 +73,14 @@ export function UploadDialog({
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type || null,
+<<<<<<< HEAD
         description: null,
       });
 
+=======
+      });
+      if (insErr) throw insErr;
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       toast.success("Uploaded");
       qc.invalidateQueries({ queryKey: ["materials"] });
       qc.invalidateQueries({ queryKey: ["materials-stats"] });
@@ -77,11 +101,15 @@ export function UploadDialog({
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <UploadIcon className="h-4 w-4 text-primary" /> Upload to library
           </h2>
+<<<<<<< HEAD
           <button
             onClick={onClose}
             className="p-1 text-muted-foreground hover:text-foreground"
             aria-label="Close"
           >
+=======
+          <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground" aria-label="Close">
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -127,6 +155,7 @@ export function UploadDialog({
             <div className="flex items-center justify-between gap-3 rounded-lg border border-input bg-card px-3 py-3">
               <div className="min-w-0">
                 <div className="text-sm font-medium truncate">{file.name}</div>
+<<<<<<< HEAD
                 <div className="text-xs text-muted-foreground">
                   {(file.size / 1024).toFixed(0)} KB
                 </div>
@@ -136,6 +165,11 @@ export function UploadDialog({
                 onClick={() => setFile(null)}
                 className="p-1.5 text-muted-foreground hover:text-foreground"
               >
+=======
+                <div className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</div>
+              </div>
+              <button type="button" onClick={() => setFile(null)} className="p-1.5 text-muted-foreground hover:text-foreground">
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -144,9 +178,13 @@ export function UploadDialog({
               <div className="rounded-lg border-2 border-dashed border-border bg-card hover:border-primary/50 hover:bg-primary-soft/30 transition-all px-6 py-8 text-center">
                 <UploadIcon className="h-5 w-5 text-primary mx-auto" />
                 <div className="mt-2 text-sm font-medium">Choose a file</div>
+<<<<<<< HEAD
                 <div className="text-xs text-muted-foreground mt-0.5">
                   PDF, docs, images · max 25 MB
                 </div>
+=======
+                <div className="text-xs text-muted-foreground mt-0.5">PDF, docs, images · max 25 MB</div>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
               </div>
               <input
                 type="file"
@@ -161,15 +199,23 @@ export function UploadDialog({
             disabled={busy}
             className="ripple w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg px-4 py-2.5 text-sm font-semibold shadow-elev-1 hover:shadow-glow transition-all disabled:opacity-60"
           >
+<<<<<<< HEAD
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <UploadIcon className="h-4 w-4" />
             )}
+=======
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadIcon className="h-4 w-4" />}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             {busy ? "Uploading…" : "Upload"}
           </button>
         </form>
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132

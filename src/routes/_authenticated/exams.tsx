@@ -1,8 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+<<<<<<< HEAD
 import { auth } from "@/lib/firebase";
 import { getStudySets, deleteStudySet } from "@/lib/firestore-db";
+=======
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import { MaterialPicker, type PickerMaterial } from "@/components/MaterialPicker";
 import { generateExamFromMaterial, getUsage } from "@/lib/exam.functions";
 import { planFor } from "@/lib/plans";
@@ -10,6 +15,10 @@ import { GraduationCap, Loader2, Play, Sparkles, Timer, Trash2 } from "lucide-re
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/exams")({
+<<<<<<< HEAD
+=======
+  head: () => ({ meta: [{ title: "Exams — Lumio" }] }),
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   component: ExamsPage,
 });
 
@@ -25,16 +34,30 @@ type ExamRow = {
 function ExamsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+<<<<<<< HEAD
   const generate = generateExamFromMaterial;
+=======
+  const generate = useServerFn(generateExamFromMaterial);
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   const [material, setMaterial] = useState<PickerMaterial | null>(null);
   const [count, setCount] = useState(15);
   const [creating, setCreating] = useState(false);
 
   const { data: exams = [], isLoading } = useQuery({
     queryKey: ["sets", "exam"],
+<<<<<<< HEAD
     enabled: !!auth.currentUser?.uid,
     queryFn: async () => {
       const data = await getStudySets(auth.currentUser!.uid, "exam");
+=======
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("study_sets")
+        .select("id,title,subject,questions,time_limit_minutes,created_at")
+        .eq("kind", "exam")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       return (data ?? []) as unknown as ExamRow[];
     },
   });
@@ -61,6 +84,7 @@ function ExamsPage() {
 
   const remove = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"?`)) return;
+<<<<<<< HEAD
     try {
       await deleteStudySet(id);
       toast.success("Deleted");
@@ -68,6 +92,12 @@ function ExamsPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not delete");
     }
+=======
+    const { error } = await supabase.from("study_sets").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Deleted");
+    qc.invalidateQueries({ queryKey: ["sets", "exam"] });
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   };
 
   return (
@@ -77,6 +107,7 @@ function ExamsPage() {
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <GraduationCap className="h-7 w-7 text-primary" /> Take an exam
           </h1>
+<<<<<<< HEAD
           <p className="mt-1 text-muted-foreground">
             Build a timed exam straight from a document in your library.
           </p>
@@ -88,11 +119,20 @@ function ExamsPage() {
             <Link to="/billing" className="ml-2 text-primary hover:underline">
               Manage
             </Link>
+=======
+          <p className="mt-1 text-muted-foreground">Build a timed exam straight from a document in your library.</p>
+        </div>
+        {usage && (
+          <div className="text-xs text-muted-foreground">
+            <span className="text-foreground font-medium">{usage.used}</span> / {usage.limit} this month · {plan.name}
+            <Link to="/billing" className="ml-2 text-primary hover:underline">Manage</Link>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           </div>
         )}
       </header>
 
       <form onSubmit={create} className="surface p-6 space-y-5">
+<<<<<<< HEAD
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           New exam
         </h2>
@@ -114,6 +154,17 @@ function ExamsPage() {
             <label className="block text-xs font-medium text-muted-foreground mb-1.5">
               Number of questions
             </label>
+=======
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">New exam</h2>
+        <MaterialPicker
+          value={material?.id ?? null}
+          onChange={(_id, m) => setMaterial(m)}
+          emptyHint={<span>No documents yet. <Link to="/library" className="text-primary hover:underline">Upload one</Link> to start.</span>}
+        />
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Number of questions</label>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             <input
               type="number"
               min={5}
@@ -122,37 +173,53 @@ function ExamsPage() {
               onChange={(e) => setCount(Math.max(5, Math.min(50, Number(e.target.value) || 0)))}
               className="w-full rounded-lg border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/40 transition-all"
             />
+<<<<<<< HEAD
             <p className="mt-1 text-[11px] text-muted-foreground">
               Time limit is chosen for you based on how many questions you pick.
             </p>
+=======
+            <p className="mt-1 text-[11px] text-muted-foreground">Time limit is chosen for you based on how many questions you pick.</p>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           </div>
           <button
             type="submit"
             disabled={!material || creating}
             className="ripple inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg px-5 py-3 text-sm font-semibold shadow-elev-1 hover:shadow-glow transition-all disabled:opacity-50"
           >
+<<<<<<< HEAD
             {creating ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
+=======
+            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             {creating ? "Preparing…" : "Create exam"}
           </button>
         </div>
       </form>
 
       <section className="space-y-3">
+<<<<<<< HEAD
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Your exams
         </h2>
+=======
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Your exams</h2>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         {isLoading ? (
           <div className="surface p-10 flex items-center justify-center text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : exams.length === 0 ? (
+<<<<<<< HEAD
           <div className="surface p-10 text-center text-sm text-muted-foreground">
             No exams yet — create one above.
           </div>
+=======
+          <div className="surface p-10 text-center text-sm text-muted-foreground">No exams yet — create one above.</div>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         ) : (
           <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {exams.map((s) => (
@@ -162,9 +229,13 @@ function ExamsPage() {
                 <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{(s.questions as unknown[]).length} questions</span>
                   {s.time_limit_minutes && (
+<<<<<<< HEAD
                     <span className="inline-flex items-center gap-1">
                       <Timer className="h-3 w-3" /> {s.time_limit_minutes} min
                     </span>
+=======
+                    <span className="inline-flex items-center gap-1"><Timer className="h-3 w-3" /> {s.time_limit_minutes} min</span>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
                   )}
                 </div>
                 <div className="mt-4 flex items-center gap-2">

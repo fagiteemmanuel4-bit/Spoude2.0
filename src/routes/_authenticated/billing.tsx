@@ -1,15 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+<<<<<<< HEAD
 import { saveProfile } from "@/lib/firestore-db";
 import { PLANS, planFor, type PlanId } from "@/lib/plans";
 import { getUsage } from "@/lib/exam.functions";
 import { auth } from "@/lib/firebase";
+=======
+import { supabase } from "@/integrations/supabase/client";
+import { PLANS, planFor, type PlanId } from "@/lib/plans";
+import { getUsage } from "@/lib/exam.functions";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import { Check, Loader2, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/billing")({
+<<<<<<< HEAD
   head: () => ({ meta: [{ title: "Billing — Spoude" }] }),
+=======
+  head: () => ({ meta: [{ title: "Billing — Lumio" }] }),
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   component: Billing,
 });
 
@@ -27,6 +37,7 @@ function Billing() {
 
   const upgrade = async (id: PlanId) => {
     setSwitching(id);
+<<<<<<< HEAD
     const u = auth.currentUser;
     if (!u) {
       setSwitching(null);
@@ -38,6 +49,14 @@ function Billing() {
     } catch (err) {
       error = err instanceof Error ? err : new Error(String(err));
     }
+=======
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) {
+      setSwitching(null);
+      return toast.error("Sign in first");
+    }
+    const { error } = await supabase.from("profiles").update({ plan: id }).eq("id", u.user.id);
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     setSwitching(null);
     if (error) return toast.error(error.message);
     toast.success(`Switched to ${PLANS[id].name}`);
@@ -54,9 +73,13 @@ function Billing() {
       <section className="surface p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
+<<<<<<< HEAD
             <div className="text-xs uppercase tracking-wider text-muted-foreground">
               Current plan
             </div>
+=======
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Current plan</div>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
             <div className="mt-1 flex items-center gap-2">
               <h2 className="text-2xl font-bold">{currentPlan.name}</h2>
               {currentPlan.id !== "free" && (
@@ -85,9 +108,13 @@ function Billing() {
                 style={{ width: `${pct}%` }}
               />
             </div>
+<<<<<<< HEAD
             <p className="mt-1.5 text-[11px] text-muted-foreground">
               Resets on the 1st of each month
             </p>
+=======
+            <p className="mt-1.5 text-[11px] text-muted-foreground">Resets on the 1st of each month</p>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           </div>
         </div>
       </section>
@@ -143,8 +170,12 @@ function Billing() {
           })}
         </div>
         <p className="mt-4 text-xs text-muted-foreground text-center">
+<<<<<<< HEAD
           Pricing is a preview — payments are not yet processed. You can switch freely to test
           limits.
+=======
+          Pricing is a preview — payments are not yet processed. You can switch freely to test limits.
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         </p>
       </section>
     </div>

@@ -10,15 +10,28 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+<<<<<<< HEAD
+=======
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DisclaimerRouteImport } from './routes/disclaimer'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+<<<<<<< HEAD
 import { Route as AuthenticatedStudyRouteImport } from './routes/_authenticated/study'
 import { Route as AuthenticatedSpoudeRouteImport } from './routes/_authenticated/spoude'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+=======
+import { Route as ApiTeachRouteImport } from './routes/api/teach'
+import { Route as AuthenticatedStudyRouteImport } from './routes/_authenticated/study'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedLumioRouteImport } from './routes/_authenticated/lumio'
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedExamsRouteImport } from './routes/_authenticated/exams'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
@@ -29,6 +42,19 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+<<<<<<< HEAD
+=======
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -53,16 +79,27 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+<<<<<<< HEAD
+=======
+const ApiTeachRoute = ApiTeachRouteImport.update({
+  id: '/api/teach',
+  path: '/api/teach',
+  getParentRoute: () => rootRouteImport,
+} as any)
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 const AuthenticatedStudyRoute = AuthenticatedStudyRouteImport.update({
   id: '/study',
   path: '/study',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+<<<<<<< HEAD
 const AuthenticatedSpoudeRoute = AuthenticatedSpoudeRouteImport.update({
   id: '/spoude',
   path: '/spoude',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+=======
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -73,6 +110,14 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+<<<<<<< HEAD
+=======
+const AuthenticatedLumioRoute = AuthenticatedLumioRouteImport.update({
+  id: '/lumio',
+  path: '/lumio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
   id: '/library',
   path: '/library',
@@ -99,14 +144,27 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/disclaimer': typeof DisclaimerRoute
   '/privacy': typeof PrivacyRoute
+<<<<<<< HEAD
+=======
+  '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   '/terms': typeof TermsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/exams': typeof AuthenticatedExamsRoute
   '/library': typeof AuthenticatedLibraryRoute
+<<<<<<< HEAD
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/spoude': typeof AuthenticatedSpoudeRoute
   '/study': typeof AuthenticatedStudyRoute
+=======
+  '/lumio': typeof AuthenticatedLumioRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/study': typeof AuthenticatedStudyRoute
+  '/api/teach': typeof ApiTeachRoute
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   '/sets/$id': typeof AuthenticatedSetsIdRoute
 }
 export interface FileRoutesByTo {
@@ -114,14 +172,27 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/disclaimer': typeof DisclaimerRoute
   '/privacy': typeof PrivacyRoute
+<<<<<<< HEAD
+=======
+  '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   '/terms': typeof TermsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/exams': typeof AuthenticatedExamsRoute
   '/library': typeof AuthenticatedLibraryRoute
+<<<<<<< HEAD
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/spoude': typeof AuthenticatedSpoudeRoute
   '/study': typeof AuthenticatedStudyRoute
+=======
+  '/lumio': typeof AuthenticatedLumioRoute
+  '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/study': typeof AuthenticatedStudyRoute
+  '/api/teach': typeof ApiTeachRoute
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   '/sets/$id': typeof AuthenticatedSetsIdRoute
 }
 export interface FileRoutesById {
@@ -131,14 +202,27 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/disclaimer': typeof DisclaimerRoute
   '/privacy': typeof PrivacyRoute
+<<<<<<< HEAD
+=======
+  '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   '/terms': typeof TermsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/exams': typeof AuthenticatedExamsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
+<<<<<<< HEAD
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/spoude': typeof AuthenticatedSpoudeRoute
   '/_authenticated/study': typeof AuthenticatedStudyRoute
+=======
+  '/_authenticated/lumio': typeof AuthenticatedLumioRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/study': typeof AuthenticatedStudyRoute
+  '/api/teach': typeof ApiTeachRoute
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   '/_authenticated/sets/$id': typeof AuthenticatedSetsIdRoute
 }
 export interface FileRouteTypes {
@@ -148,14 +232,27 @@ export interface FileRouteTypes {
     | '/auth'
     | '/disclaimer'
     | '/privacy'
+<<<<<<< HEAD
+=======
+    | '/reset-password'
+    | '/sitemap.xml'
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     | '/terms'
     | '/billing'
     | '/exams'
     | '/library'
+<<<<<<< HEAD
     | '/profile'
     | '/settings'
     | '/spoude'
     | '/study'
+=======
+    | '/lumio'
+    | '/profile'
+    | '/settings'
+    | '/study'
+    | '/api/teach'
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     | '/sets/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -163,14 +260,27 @@ export interface FileRouteTypes {
     | '/auth'
     | '/disclaimer'
     | '/privacy'
+<<<<<<< HEAD
+=======
+    | '/reset-password'
+    | '/sitemap.xml'
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     | '/terms'
     | '/billing'
     | '/exams'
     | '/library'
+<<<<<<< HEAD
     | '/profile'
     | '/settings'
     | '/spoude'
     | '/study'
+=======
+    | '/lumio'
+    | '/profile'
+    | '/settings'
+    | '/study'
+    | '/api/teach'
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     | '/sets/$id'
   id:
     | '__root__'
@@ -179,14 +289,27 @@ export interface FileRouteTypes {
     | '/auth'
     | '/disclaimer'
     | '/privacy'
+<<<<<<< HEAD
+=======
+    | '/reset-password'
+    | '/sitemap.xml'
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     | '/terms'
     | '/_authenticated/billing'
     | '/_authenticated/exams'
     | '/_authenticated/library'
+<<<<<<< HEAD
     | '/_authenticated/profile'
     | '/_authenticated/settings'
     | '/_authenticated/spoude'
     | '/_authenticated/study'
+=======
+    | '/_authenticated/lumio'
+    | '/_authenticated/profile'
+    | '/_authenticated/settings'
+    | '/_authenticated/study'
+    | '/api/teach'
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     | '/_authenticated/sets/$id'
   fileRoutesById: FileRoutesById
 }
@@ -196,7 +319,14 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DisclaimerRoute: typeof DisclaimerRoute
   PrivacyRoute: typeof PrivacyRoute
+<<<<<<< HEAD
   TermsRoute: typeof TermsRoute
+=======
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
+  ApiTeachRoute: typeof ApiTeachRoute
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 }
 
 declare module '@tanstack/react-router' {
@@ -208,6 +338,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+<<<<<<< HEAD
+=======
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -243,6 +390,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+<<<<<<< HEAD
+=======
+    '/api/teach': {
+      id: '/api/teach'
+      path: '/api/teach'
+      fullPath: '/api/teach'
+      preLoaderRoute: typeof ApiTeachRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     '/_authenticated/study': {
       id: '/_authenticated/study'
       path: '/study'
@@ -250,6 +407,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+<<<<<<< HEAD
     '/_authenticated/spoude': {
       id: '/_authenticated/spoude'
       path: '/spoude'
@@ -257,6 +415,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSpoudeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+=======
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -271,6 +431,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+<<<<<<< HEAD
+=======
+    '/_authenticated/lumio': {
+      id: '/_authenticated/lumio'
+      path: '/lumio'
+      fullPath: '/lumio'
+      preLoaderRoute: typeof AuthenticatedLumioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
     '/_authenticated/library': {
       id: '/_authenticated/library'
       path: '/library'
@@ -306,9 +476,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedExamsRoute: typeof AuthenticatedExamsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+<<<<<<< HEAD
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSpoudeRoute: typeof AuthenticatedSpoudeRoute
+=======
+  AuthenticatedLumioRoute: typeof AuthenticatedLumioRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   AuthenticatedStudyRoute: typeof AuthenticatedStudyRoute
   AuthenticatedSetsIdRoute: typeof AuthenticatedSetsIdRoute
 }
@@ -317,9 +493,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedExamsRoute: AuthenticatedExamsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+<<<<<<< HEAD
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSpoudeRoute: AuthenticatedSpoudeRoute,
+=======
+  AuthenticatedLumioRoute: AuthenticatedLumioRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   AuthenticatedStudyRoute: AuthenticatedStudyRoute,
   AuthenticatedSetsIdRoute: AuthenticatedSetsIdRoute,
 }
@@ -333,8 +515,28 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DisclaimerRoute: DisclaimerRoute,
   PrivacyRoute: PrivacyRoute,
+<<<<<<< HEAD
   TermsRoute: TermsRoute,
+=======
+  ResetPasswordRoute: ResetPasswordRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
+  ApiTeachRoute: ApiTeachRoute,
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+<<<<<<< HEAD
+=======
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132

@@ -1,8 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+<<<<<<< HEAD
 import { auth } from "@/lib/firebase";
 import { MaterialPicker, type PickerMaterial } from "@/components/MaterialPicker";
+=======
+import { supabase } from "@/integrations/supabase/client";
+import { LibrarySearchModal, type LibrarySearchMaterial } from "@/components/LibrarySearchModal";
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 import { TEACHING_STYLES, styleById } from "@/lib/teaching-styles";
 import { Markdown } from "@/components/Markdown";
 import { SpeakButton } from "@/components/SpeakButton";
@@ -16,6 +21,7 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+<<<<<<< HEAD
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,14 +31,101 @@ const TEACH_FUNCTION_URL = "https://us-central1-spoude.cloudfunctions.net/teach"
 
 export const Route = createFileRoute("/_authenticated/study")({
   head: () => ({ meta: [{ title: "Study — Spoude" }] }),
+=======
+  Search,
+  CheckCircle2,
+} from "lucide-react";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/study")({
+  head: () => ({ meta: [{ title: "Study — Lumio" }] }),
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   component: StudyPage,
 });
 
 type Stage = "pick" | "lesson";
 
+<<<<<<< HEAD
 function StudyPage() {
   const [stage, setStage] = useState<Stage>("pick");
   const [material, setMaterial] = useState<PickerMaterial | null>(null);
+=======
+function StyleScroller({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const active = styleById(value);
+
+  const scrollBy = (dir: 1 | -1) => {
+    scrollerRef.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        {/* Edge fade hints so it reads as scrollable, not cut off */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[var(--popover)] to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[var(--popover)] to-transparent z-10" />
+
+        <button
+          type="button"
+          onClick={() => scrollBy(-1)}
+          aria-label="Scroll styles left"
+          className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-20 h-7 w-7 items-center justify-center rounded-full border border-border bg-card shadow-elev-1 hover:border-primary/40 transition-colors"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollBy(1)}
+          aria-label="Scroll styles right"
+          className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-20 h-7 w-7 items-center justify-center rounded-full border border-border bg-card shadow-elev-1 hover:border-primary/40 transition-colors"
+        >
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+
+        <div
+          ref={scrollerRef}
+          className="flex gap-2 overflow-x-auto scroll-smooth snap-x snap-mandatory px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {TEACHING_STYLES.map((s) => {
+            const isActive = value === s.id;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onChange(s.id)}
+                className={`snap-start shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all ripple whitespace-nowrap ${
+                  isActive
+                    ? "border-primary bg-primary-soft text-foreground shadow-elev-1"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                <span className="text-base leading-none">{s.emoji}</span>
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Detail panel for whichever style is currently selected — no scrolling needed to see it */}
+      {active && (
+        <div className="flex items-start gap-3 rounded-lg bg-primary-soft/60 border border-primary/20 px-4 py-3 animate-fade-up">
+          <span className="text-xl leading-none mt-0.5">{active.emoji}</span>
+          <div>
+            <div className="text-sm font-semibold">{active.label}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{active.blurb}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StudyPage() {
+  const [stage, setStage] = useState<Stage>("pick");
+  const [material, setMaterial] = useState<LibrarySearchMaterial | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   const [styleId, setStyleId] = useState<string>(TEACHING_STYLES[0].id);
   const [pages, setPages] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -60,9 +153,16 @@ function StudyPage() {
     abortRef.current = ctrl;
 
     try {
+<<<<<<< HEAD
       const token = await auth.currentUser?.getIdToken();
       if (!token) throw new Error("Not signed in");
       const res = await fetch(TEACH_FUNCTION_URL, {
+=======
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error("Not signed in");
+      const res = await fetch("/api/teach", {
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ materialId: material.id, styleId, page: pageNum, previousSummary }),
@@ -184,14 +284,22 @@ function StudyPage() {
               <Markdown>{pageText}</Markdown>
             ) : (
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
+<<<<<<< HEAD
                 <Loader2 className="h-4 w-4 animate-spin" /> Reading your document and preparing the
                 lesson…
+=======
+                <Loader2 className="h-4 w-4 animate-spin" /> Reading your document and preparing the lesson…
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
               </div>
             )}
             {streaming && pageText && isLastPage && (
               <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+<<<<<<< HEAD
                 <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" />{" "}
                 writing…
+=======
+                <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" /> writing…
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
               </div>
             )}
           </article>
@@ -235,24 +343,35 @@ function StudyPage() {
             <BookOpenCheck className="h-7 w-7 text-primary" /> Study
           </h1>
           <p className="mt-1 text-muted-foreground">
+<<<<<<< HEAD
             Pick a document and a teaching style. Your tutor will read it and teach you page by page
             — tap
             <span className="text-foreground font-medium"> Continue </span> for a deeper page
             anytime.
+=======
+            Pick a document and a teaching style. Your tutor will read it and teach you page by page — tap
+            <span className="text-foreground font-medium"> Continue </span> for a deeper page anytime.
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           </p>
         </div>
         {usage && (
           <div className="text-xs text-muted-foreground">
+<<<<<<< HEAD
             <span className="text-foreground font-medium">{usage.used}</span> / {usage.limit}{" "}
             lessons & exams this month · {plan.name}
             <Link to="/billing" className="ml-2 text-primary hover:underline">
               Manage
             </Link>
+=======
+            <span className="text-foreground font-medium">{usage.used}</span> / {usage.limit} lessons & exams this month · {plan.name}
+            <Link to="/billing" className="ml-2 text-primary hover:underline">Manage</Link>
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           </div>
         )}
       </header>
 
       <section className="surface p-6 space-y-4">
+<<<<<<< HEAD
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           1. Choose a document
         </h2>
@@ -268,10 +387,50 @@ function StudyPage() {
               to begin.
             </span>
           }
+=======
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">1. Choose a document</h2>
+        {material ? (
+          <div className="flex items-center gap-3 rounded-xl border border-primary bg-primary-soft p-3.5">
+            <div className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium truncate">{material.title}</div>
+              <div className="text-xs text-muted-foreground truncate">{material.subject ?? material.file_name}</div>
+            </div>
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="shrink-0 text-xs font-semibold text-primary hover:underline"
+            >
+              Change
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="ripple w-full flex items-center gap-3 rounded-xl border border-dashed border-border bg-card p-4 text-left hover:border-primary/40 transition-all"
+          >
+            <div className="h-9 w-9 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
+              <Search className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-sm font-medium">Search library</div>
+              <div className="text-xs text-muted-foreground">
+                Browse your notes, homework & past papers — or upload something new.
+              </div>
+            </div>
+          </button>
+        )}
+        <LibrarySearchModal
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(m) => { setMaterial(m); setPickerOpen(false); }}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
         />
       </section>
 
       <section className="surface p-6 space-y-4">
+<<<<<<< HEAD
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           2. Pick a teaching style
         </h2>
@@ -294,6 +453,10 @@ function StudyPage() {
             );
           })}
         </div>
+=======
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">2. Pick a teaching style</h2>
+        <StyleScroller value={styleId} onChange={setStyleId} />
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
       </section>
 
       <div className="flex items-center justify-end">
@@ -307,4 +470,8 @@ function StudyPage() {
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132

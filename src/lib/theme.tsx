@@ -19,9 +19,13 @@ function initial(): Theme {
   try {
     const stored = localStorage.getItem(KEY) as Theme | null;
     if (stored === "light" || stored === "dark") return stored;
+<<<<<<< HEAD
   } catch (e) {
     return "light";
   }
+=======
+  } catch {}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   return "light";
 }
 
@@ -30,11 +34,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     apply(theme);
+<<<<<<< HEAD
     try {
       localStorage.setItem(KEY, theme);
     } catch (e) {
       void e;
     }
+=======
+    try { localStorage.setItem(KEY, theme); } catch {}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
   }, [theme]);
 
   const setTheme = (t: Theme) => setThemeState(t);
@@ -50,4 +58,8 @@ export function useTheme() {
 }
 
 /** Inline script string — runs before hydration to prevent flash. */
+<<<<<<< HEAD
 export const themeInitScript = `(function(){try{var t=localStorage.getItem('${KEY}');if(t!=='light'&&t!=='dark'){t='light';}var r=document.documentElement;if(t==='dark')r.classList.add('dark');r.style.colorScheme=t;}catch(e){}})();`;
+=======
+export const themeInitScript = `(function(){try{var t=localStorage.getItem('${KEY}');if(t!=='light'&&t!=='dark'){t='light';}var r=document.documentElement;if(t==='dark')r.classList.add('dark');r.style.colorScheme=t;}catch(e){}})();`;
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132

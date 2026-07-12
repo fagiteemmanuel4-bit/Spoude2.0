@@ -52,4 +52,8 @@ export function speakableText(md: string): string {
     .replace(/-{3,}/g, "")
     .replace(/\s+/g, " ")
     .trim();
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132

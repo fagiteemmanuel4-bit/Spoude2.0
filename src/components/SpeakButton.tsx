@@ -32,6 +32,7 @@ export function SpeakButton({ text, disabled }: { text: string; disabled?: boole
     setState("speaking");
   };
 
+<<<<<<< HEAD
   const pause = () => {
     window.speechSynthesis.pause();
     setState("paused");
@@ -44,10 +45,16 @@ export function SpeakButton({ text, disabled }: { text: string; disabled?: boole
     window.speechSynthesis.cancel();
     setState("idle");
   };
+=======
+  const pause = () => { window.speechSynthesis.pause(); setState("paused"); };
+  const resume = () => { window.speechSynthesis.resume(); setState("speaking"); };
+  const stop = () => { window.speechSynthesis.cancel(); setState("idle"); };
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
 
   return (
     <div className="inline-flex items-center gap-1.5">
       {state === "speaking" ? (
+<<<<<<< HEAD
         <button
           type="button"
           onClick={pause}
@@ -71,19 +78,38 @@ export function SpeakButton({ text, disabled }: { text: string; disabled?: boole
           disabled={disabled}
           className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-3 py-1.5 text-xs font-semibold shadow-elev-1 hover:shadow-glow transition-all disabled:opacity-50"
         >
+=======
+        <button type="button" onClick={pause} disabled={disabled} className="ripple inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 transition-colors">
+          <Pause className="h-3.5 w-3.5" /> Pause
+        </button>
+      ) : state === "paused" ? (
+        <button type="button" onClick={resume} className="ripple inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/40 transition-colors">
+          <Play className="h-3.5 w-3.5" /> Resume
+        </button>
+      ) : (
+        <button type="button" onClick={start} disabled={disabled} className="ripple inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-3 py-1.5 text-xs font-semibold shadow-elev-1 hover:shadow-glow transition-all disabled:opacity-50">
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           <Play className="h-3.5 w-3.5" /> Play
         </button>
       )}
       {state !== "idle" && (
+<<<<<<< HEAD
         <button
           type="button"
           onClick={stop}
           className="ripple inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
           aria-label="Stop"
         >
+=======
+        <button type="button" onClick={stop} className="ripple inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors" aria-label="Stop">
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
           <Square className="h-3.5 w-3.5" />
         </button>
       )}
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 6eb08cd852ad86633840258078184b8cf02d3132
