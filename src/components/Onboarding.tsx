@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { Sparkles, Home, Plus, Moon, User, ArrowRight, X } from "lucide-react";
-import { LumioMark } from "@/components/Logo";
+import { SpoudeMark } from "@/components/Logo";
 
 const KEY = "lumio-onboarding-v1";
 
