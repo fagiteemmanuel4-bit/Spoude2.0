@@ -6,9 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   BookOpen, FileText, GraduationCap, Download, Trash2, Loader2, Search,
   Upload as UploadIcon, Pin, PinOff, Globe, Lock as LockIcon, Copy, X,
+  Library as LibraryIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { UploadDialog } from "@/components/UploadDialog";
+import { LibrarySearchModal, type LibrarySearchMaterial } from "@/components/LibrarySearchModal";
 
 const searchSchema = z.object({ type: z.enum(["notes", "homework", "exam"]).optional() });
 
@@ -47,6 +49,7 @@ function Library() {
   const activeType = search.type ?? "notes";
   const [query, setQuery] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [menu, setMenu] = useState<{ material: Material; x: number; y: number } | null>(null);
 
   const { data: items = [], isLoading } = useQuery({
@@ -127,10 +130,18 @@ function Library() {
           <p className="mt-1 text-sm text-muted-foreground">Your bookshelf — tap and hold a book for more.</p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="flex items-center gap-2 rounded-full border border-input bg-card px-3 py-2 flex-1 sm:w-72 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40 transition-all">
+          <div className="flex items-center gap-2 rounded-full border border-input bg-card px-3 py-2 flex-1 sm:w-64 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/40 transition-all">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search title, subject…" className="w-full bg-transparent outline-none text-sm" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search this shelf…" className="w-full bg-transparent outline-none text-sm" />
           </div>
+          <button
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search your whole library"
+            title="Search your whole library"
+            className="shrink-0 h-9 w-9 rounded-full border border-input bg-card flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+          >
+            <LibraryIcon className="h-4 w-4" />
+          </button>
           <button
             onClick={() => setUploadOpen(true)}
             className="ripple inline-flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full px-4 py-2 text-sm font-semibold shadow-elev-1 hover:shadow-glow transition-all"
@@ -141,6 +152,14 @@ function Library() {
       </header>
 
       {uploadOpen && <UploadDialog defaultType={activeType} onClose={() => setUploadOpen(false)} />}
+      <LibrarySearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelect={(m: LibrarySearchMaterial) => {
+          setSearchOpen(false);
+          navigate({ search: { type: m.type } });
+        }}
+      />
 
       {/* Shelf tabs */}
       <div className="flex gap-2 border-b border-border">

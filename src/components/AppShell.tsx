@@ -17,7 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
-import { SpoudeMark, SpoudeWordmark } from "@/components/Logo";
+import { SpoudeWordmark } from "@/components/Logo";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -245,8 +245,7 @@ function MobileHeader() {
   return (
     <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14 bg-background/75 backdrop-blur-xl border-b border-border/70">
       <div className="flex items-center gap-2">
-        <SpoudeMark size={26} />
-        <SpoudeWordmark size={19} />
+        <SpoudeWordmark size={20} />
       </div>
       <div className="flex items-center gap-1">
         <button

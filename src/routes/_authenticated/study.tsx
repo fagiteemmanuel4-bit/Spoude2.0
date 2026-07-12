@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MaterialPicker, type PickerMaterial } from "@/components/MaterialPicker";
+import { LibrarySearchModal, type LibrarySearchMaterial } from "@/components/LibrarySearchModal";
 import { TEACHING_STYLES, styleById } from "@/lib/teaching-styles";
 import { Markdown } from "@/components/Markdown";
 import { SpeakButton } from "@/components/SpeakButton";
@@ -16,6 +16,8 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  Search,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -97,7 +99,8 @@ function StyleScroller({ value, onChange }: { value: string; onChange: (id: stri
   );
 }
   const [stage, setStage] = useState<Stage>("pick");
-  const [material, setMaterial] = useState<PickerMaterial | null>(null);
+  const [material, setMaterial] = useState<LibrarySearchMaterial | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [styleId, setStyleId] = useState<string>(TEACHING_STYLES[0].id);
   const [pages, setPages] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -313,10 +316,42 @@ function StyleScroller({ value, onChange }: { value: string; onChange: (id: stri
 
       <section className="surface p-6 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">1. Choose a document</h2>
-        <MaterialPicker
-          value={material?.id ?? null}
-          onChange={(_id, m) => setMaterial(m)}
-          emptyHint={<span>Your library is empty. <Link to="/library" className="text-primary hover:underline">Upload one</Link> to begin.</span>}
+        {material ? (
+          <div className="flex items-center gap-3 rounded-xl border border-primary bg-primary-soft p-3.5">
+            <div className="h-9 w-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium truncate">{material.title}</div>
+              <div className="text-xs text-muted-foreground truncate">{material.subject ?? material.file_name}</div>
+            </div>
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="shrink-0 text-xs font-semibold text-primary hover:underline"
+            >
+              Change
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="ripple w-full flex items-center gap-3 rounded-xl border border-dashed border-border bg-card p-4 text-left hover:border-primary/40 transition-all"
+          >
+            <div className="h-9 w-9 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
+              <Search className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-sm font-medium">Search library</div>
+              <div className="text-xs text-muted-foreground">
+                Browse your notes, homework & past papers — or upload something new.
+              </div>
+            </div>
+          </button>
+        )}
+        <LibrarySearchModal
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(m) => { setMaterial(m); setPickerOpen(false); }}
         />
       </section>
 
